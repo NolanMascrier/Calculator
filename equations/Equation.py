@@ -251,28 +251,22 @@ class Equation():
             discriminant = self._deg1.coeff  ** 2 - (4 * self._deg0.coeff * self._deg2.coeff)
             #Quadratic
             #x=(−b±sqrt(b2−4ac))/2c
+            x1 = (-self._deg1.coeff + ft_sqrt(discriminant) ) / (2 * self._deg2.coeff)
+            x2 = (-self._deg1.coeff - ft_sqrt(discriminant) ) / (2 * self._deg2.coeff)
             if discriminant == 0:
                 print("Discriminant is equal to 0, only one solution is :")
-                soluce = -self._deg1.coeff / (2 * self._deg2.coeff)
-                print(soluce)
+                print(x1)
             elif discriminant > 0:
                 print("Discriminant is strictly positive, the two solutions are:")
-                x1 = (-self._deg1.coeff + ft_sqrt(discriminant) ) / (2 * self._deg2.coeff)
-                x2 = (-self._deg1.coeff - ft_sqrt(discriminant) ) / (2 * self._deg2.coeff)
                 print(f"({format_fraction(x1)}, {format_fraction(x2)})")
             elif discriminant < 0:
                 print("Discriminant is strictly negative, the two complex solutions are :")
-                x1 = (-self._deg1.coeff + ft_sqrt(discriminant) ) / (2 * self._deg2.coeff)
-                x2 = (-self._deg1.coeff - ft_sqrt(discriminant) ) / (2 * self._deg2.coeff)
                 print(f"({format_complex(x1)}, {format_complex(x2)})")
 
     def run(self):
         """Runs the whole sequence."""
         print(f"Base equation     : {str(self)}")
         print(f"Polynomial degree : {str(self.degree())}")
-        if self.degree() > 2:
-            print("The polynomial degree is strictly greater than 2, I can't solve.")
-            return
         self.reorder()
         print(f"Ordered Equation  : {str(self)}")
         self.simplify()

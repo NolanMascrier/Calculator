@@ -7,7 +7,7 @@ from Equation import Equation
 def extract_terms(expression, regex):
         """Extracts the tuples according to the regex"""
         terms = []
-        seen_exponents = set()
+        seen_exponents = []
         for match in regex.finditer(expression):
             coeff_str, x_part, exponent_str = match.groups()
             if not coeff_str and not x_part:  
@@ -22,7 +22,7 @@ def extract_terms(expression, regex):
             if (exponent > 2):
                 return None
             terms.append((coeff, exponent))
-            seen_exponents.add(exponent)
+            seen_exponents.append(exponent)
         for exp in range(0, 3):
             if exp not in seen_exponents:
                 terms.insert(exp, (0, exp))
@@ -32,7 +32,10 @@ def parse(equation):
     """Parses the equation and creates the polynomials using regex"""
     equation = equation.replace(" ", "")
     left, right = equation.split("=")
-    regex = re.compile(r"([+-]?[0-9]*\.?[0-9]*)(x(?:\^([0-9]+))?)?") #Thank you google
+    if left == "" or right == "":
+        print("The equation needs at least one element on each side of the = !")
+        return
+    regex = re.compile(r"([+-]?[0-9]*\.?[0-9]*)([xX](?:\^([0-9]+))?)?") #Thank you google
     left_terms = extract_terms(left, regex)
     right_terms = extract_terms(right, regex)
     if left_terms is None or right_terms is None:
