@@ -4,6 +4,8 @@ from ft_maths import ft_sqrt
 from fractions import Fraction
 from Polynomial import Polynomial
 
+MAX_DEGREE = 2
+
 def format_fraction(value, max_denominator = 100):
     """Displays the fraction if it's reductible, displays the
     float otherwise.
@@ -40,122 +42,141 @@ def format_complex(complex):
         return str(fre) + " + " + str(fim) + "i"
     else:
         return str(fre)
+    
+def squish(list):
+    """Squishes a list of polynomials.
+    
+    Args:
+        list (dict): the list of polymomials.
+
+    Returns:
+        dict: the squished list.    
+    """
+    seen_exponents = []
+    result = []
+    for obj in list:
+        if obj.exponant in seen_exponents:
+            for res_obj in result:
+                if res_obj.exponant == obj.exponant:
+                    res_obj.coeff += obj.coeff
+                    break
+        else:
+            result.append(Polynomial(obj.coeff, obj.exponant))
+            seen_exponents.append(obj.exponant)
+    return result
 
 class Equation():
-    def __init__(self, a, b, c, ra = None, rb = None, rc = None):
-        self._deg0 = a
-        self._deg1 = b
-        self._deg2 = c
-        if ra is None:
-            ra = Polynomial(0, 0)  
-        self._res0 = ra
-        if rb is None:
-            rb = Polynomial(0, 1)    
-        self._res1 = rb
-        if rc is None:
-            rc = Polynomial(0, 2)   
-        self._res2 = rc
+    def __init__(self, left = None, right = None):
+        if left is None:
+            self._left = []
+        else:
+            self._left = left
+        if right is None:
+            self._right = []
+        else:
+            self._right = right
+        self._deg_left = 0
+        self._deg_right = 0
+        self.__complete_missing()
+        self._deg = max(self._deg_left, self._deg_right)
+        #self.__squash()
 
-    def left_side(self):
+    def __sort_sides(self):
+        """Sorts left and right sides according to
+        their degrees.
+        """
+        sorted_left = sorted(self._left, key= lambda data: data.exponant)
+        sorted_right = sorted(self._right, key= lambda data: data.exponant)
+        self._left = sorted_left
+        self._right = sorted_right
+
+    def __squash(self):
+        """Squish all polynomial of the same degree together.
+        """
+        self._left = squish(self._left)
+        self._right = squish(self._right)
+
+    def __complete_missing(self):
+        """Adds the missing polynomials that are equal
+        to 0 in the equation."""
+        got_left = []
+        got_right = []
+        for data in self._left:
+            got_left.append(data.exponant)
+        for data in self._right:
+            got_right.append(data.exponant)
+        max_left = max(got_left)
+        max_right = max(got_right)
+        self._deg_left = max_left
+        self._deg_right = max_right
+        max_equation = max(max_left, max_right)
+        for i in range(0, max_equation + 1):
+            if i not in got_left:
+                self._left.append(Polynomial(0, i))
+        for i in range(0, max_equation + 1):
+            if i not in got_right:
+                self._right.append(Polynomial(0, i))
+
+    def __left_side(self):
         """Returns the left side of the equation
         as a string.
         
         Returns:
             str: left side of the equation."""
-        if self._deg0.coeff == 0 and self._deg1.coeff == 0 and self._deg2.coeff == 0:
+        if self._deg_left == 0:
             return "0"
-        value = "" if self._deg0.coeff > 0 else "-" if self._deg0.coeff < 0 else ""
-        value += str(self._deg0)
-        if self._deg0.coeff == 0:
-            value += "" if self._deg1.coeff > 0 else "-" if self._deg1.coeff < 0 else ""
-            value += str(self._deg1)
-        else:
-            value += " + " if self._deg1.coeff > 0 else " - " if self._deg1.coeff < 0 else ""
-            value += str(self._deg1)
-        if self._deg1.coeff == 0 and self._deg0.coeff == 0:
-            value += "" if self._deg2.coeff > 0 else "-" if self._deg2.coeff < 0 else ""
-            value += str(self._deg2)
-        else:
-            value += " + " if self._deg2.coeff > 0 else " - " if self._deg2.coeff < 0 else ""
-            value += str(self._deg2)
+        value = ""
+        flag = False
+        for data in self._left:
+            if data.coeff == 0:
+                continue
+
+            if flag is False:
+                sign = "" if data.coeff > 0 else "-"
+                value += sign + str(data)
+                flag = True
+            else:
+                sign = " + " if data.coeff > 0 else " - "
+                value += sign + str(data)
         return value
 
-    def right_side(self):
+    def __right_side(self):
         """Returns the right side of the equation
         as a string.
         
         Returns:
             str: right side of the equation."""
-        if self._res0.coeff == 0 and self._res1.coeff == 0 and self._res2.coeff == 0:
+        if self._deg_right == 0:
             return "0"
-        value = "" if self._res0.coeff > 0 else "-" if self._res0.coeff < 0 else ""
-        value += str(self._res0)
-        if self._res0.coeff == 0:
-            value += "" if self._res1.coeff > 0 else "-" if self._res1.coeff < 0 else ""
-            value += str(self._res1)
-        else:
-            value += " + " if self._res1.coeff > 0 else " - " if self._res1.coeff < 0 else ""
-            value += str(self._res1)
-        if self._res1.coeff == 0 and self._res0.coeff == 0:
-            value += "" if self._res2.coeff > 0 else "-" if self._res2.coeff < 0 else ""
-            value += str(self._res2)
-        else:
-            value += " + " if self._res2.coeff > 0 else " - " if self._res2.coeff < 0 else ""
-            value += str(self._res2)
+        value = ""
+        flag = False
+        for data in self._right:
+            if data.coeff == 0:
+                continue
+
+            if flag is False:
+                sign = "" if data.coeff > 0 else "-"
+                value += sign + str(data)
+                flag = True
+            else:
+                sign = " + " if data.coeff > 0 else " - "
+                value += sign + str(data)
+        if value == "":
+            return "0"
         return value
 
     def __str__(self):
-        return (self.left_side() + " = " + self.right_side()).replace(".0 ", ' ').replace(".0x", 'x').replace(".0\n", '\n')
+        return (self.__left_side() + " = " + self.__right_side()).replace(".0 ", ' ').replace(".0x", 'x').replace(".0\n", '\n')
     
     def degree(self) -> int:
         """Returns the polynomial degree of the equation as a string.
         
         Returns:
             int : polynomial degree"""
-        deg_right = max(max(self._deg0.degree(), self._deg1.degree()), self._deg2.degree())
-        deg_left = max(max(self._res0.degree(), self._res1.degree()), self._res2.degree())
-        return max(deg_right, deg_left)
-
-    def reorder(self):
-        """Reorders the equation in the a + bx + cx^2 = d format"""
-        flag = False
-        #left side
-        if self._deg0.exponant > self._deg1.exponant:
-            backup = self._deg0
-            self._deg0 = self._deg1
-            self._deg1 = backup
-            flag = True
-        if self._deg0.exponant > self._deg2.exponant:
-            backup = self._deg0
-            self._deg0 = self._deg2
-            self._deg2 = backup
-            flag = True
-        if self._deg1.exponant > self._deg2.exponant:
-            backup = self._deg1
-            self._deg1 = self._deg2
-            self._deg2 = backup
-            flag = True
-        #Right side
-        if self._res0.exponant > self._res1.exponant:
-            backup = self._res0
-            self._res0 = self._res1
-            self._res1 = backup
-            flag = True
-        if self._res0.exponant > self._res2.exponant:
-            backup = self._res0
-            self._res0 = self._res2
-            self._res2 = backup
-            flag = True
-        if self._res1.exponant > self._res2.exponant:
-            backup = self._res1
-            self._res1 = self._res2
-            self._res2 = backup
-            flag = True
-        if flag is True:
-            self.reorder()
+        return self._deg
 
     def simplify_left(self, coeff, expo, sign):
-        value = self.left_side()
+        value = self.__left_side()
         index = value.find(f"x^{expo}")
         if expo == 0:
             index = value.find(' ')
@@ -171,7 +192,7 @@ class Equation():
         return stepped
     
     def simplify_right(self, coeff, expo, sign):
-        value = self.right_side()
+        value = self.__right_side()
         index = value.find(f"x^{expo}")
         if expo == 0:
             index = value.find(' ')
@@ -196,42 +217,21 @@ class Equation():
     def simplify(self):
         """Simplifies the equation by making the right side equal
         to 0."""
-        if self._res0.coeff < 0:
-            self.simplify_step(self._res0.coeff, 0, '+')
-            coeff = self._deg0.coeff + self._res0.coeff
-            self._res0 = Polynomial(0, 0)
-            self._deg0 = Polynomial(coeff, 0)
-        elif self._res0.coeff > 0:
-            coeff = self._deg0.coeff - self._res0.coeff
-            self.simplify_step(self._res0.coeff, 0, '-')
-            self._res0 = Polynomial(0, 0)
-            self._deg0 = Polynomial(coeff, 0)
-        
-        if self._res1.coeff < 0:
-            coeff = self._deg1.coeff + self._res1.coeff
-            self.simplify_step(self._res1.coeff, 1, '+')
-            self._res1 = Polynomial(0, 1)
-            self._deg1 = Polynomial(coeff, 1)
-        elif self._res1.coeff > 0:
-            coeff = self._deg1.coeff - self._res1.coeff
-            self.simplify_step(self._res1.coeff, 1, '-')
-            self._res1 = Polynomial(0, 1)
-            self._deg1 = Polynomial(coeff, 1)
-
-        if self._res2.coeff < 0:
-            coeff = self._deg2.coeff + self._res2.coeff
-            self.simplify_step(self._res2.coeff, 2, '+')
-            self._res2 = Polynomial(0, 2)
-            self._deg2 = Polynomial(coeff, 2)
-        elif self._res2.coeff > 0:
-            coeff = self._deg2.coeff - self._res2.coeff
-            self.simplify_step(self._res2.coeff, 2, '-')
-            self._res2 = Polynomial(0, 2)
-            self._deg2 = Polynomial(coeff, 2)
+        for i in range(0, self._deg + 1):
+            if self._right[i].coeff < 0:
+                self.simplify_step(self._right[i].coeff, i, '+')
+                coeff = self._left[i].coeff + self._right[i].coeff
+                self._right[i] = Polynomial(0, i)
+                self._left[i] = Polynomial(coeff, i)
+            elif self._right[i].coeff > 0:
+                self.simplify_step(self._right[i].coeff, i, '-')
+                coeff = self._left[i].coeff - self._right[i].coeff
+                self._right[i] = Polynomial(0, i)
+                self._left[i] = Polynomial(coeff, i)
 
     def solve(self):
         """Solves the equation."""
-        if self._deg1.coeff == 0 and self._deg2.coeff == 0: #Not an equation (a=b)
+        """if self._deg1.coeff == 0 and self._deg2.coeff == 0: #Not an equation (a=b)
             if self._res0.coeff == self._deg0.coeff:
                 print("Any real number is a solution.")
             else:
@@ -261,13 +261,18 @@ class Equation():
                 print(f"({format_fraction(x1)}, {format_fraction(x2)})")
             elif discriminant < 0:
                 print("Discriminant is strictly negative, the two complex solutions are :")
-                print(f"({format_complex(x1)}, {format_complex(x2)})")
+                print(f"({format_complex(x1)}, {format_complex(x2)})")"""
 
     def run(self):
         """Runs the whole sequence."""
         print(f"Base equation     : {str(self)}")
+        self.__squash()
+        print(f"Squashed equation : {str(self)}")
         print(f"Polynomial degree : {str(self.degree())}")
-        self.reorder()
+        if self.degree() > MAX_DEGREE:
+            print(f"Degree is superior to {MAX_DEGREE}, cannot solve")
+            return
+        self.__sort_sides()
         print(f"Ordered Equation  : {str(self)}")
         self.simplify()
         print(f"Reduced equation  : {str(self)}")

@@ -21,9 +21,16 @@ class Polynomial():
             str : Polynomial as a string."""
         if self._coeff == 0:
             return ""
+        val = ""
         if self._exponant == 0:
-            return str(abs(self._coeff))
-        return str(abs(self._coeff)) + self._variable + "^" + str(self._exponant)
+            return str(self._coeff)
+        if abs(self._coeff) == 1:
+            val += self._variable
+        else:
+            val += "" + str(abs(self._coeff)) + self._variable
+        if self._exponant == 1:
+            return val
+        return val + "^" + str(self._exponant)
     
     def degree(self) -> int:
         """Returns the degree of the polynomial
@@ -31,8 +38,6 @@ class Polynomial():
         Returns:
             int : degree of the polynomial
         """
-        if self.coeff == 0:
-            return 0
         return self._exponant
     
     def calculate(self, x) -> float:
