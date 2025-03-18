@@ -123,11 +123,13 @@ class Equation():
         
         Returns:
             str: left side of the equation."""
-        if self._deg_left == 0:
-            return "0"
         value = ""
         flag = False
         for data in self._left:
+            if self._deg_left == 0 and data.coeff == 0:
+                return "0"
+            elif self._deg_left == 0 and data.coeff != 0:
+                return str(data.coeff)
             if data.coeff == 0:
                 continue
 
@@ -146,11 +148,13 @@ class Equation():
         
         Returns:
             str: right side of the equation."""
-        if self._deg_right == 0:
-            return "0"
         value = ""
         flag = False
         for data in self._right:
+            if self._deg_right == 0 and data.coeff == 0:
+                return "0"
+            elif self._deg_right == 0 and data.coeff != 0:
+                return str(data.coeff)
             if data.coeff == 0:
                 continue
 
@@ -165,7 +169,12 @@ class Equation():
             return "0"
         return value
 
-    def __str__(self):
+    def __str__(self) -> str:
+        """Displays the equation as a string.
+        
+        Returns:
+            str: Displayed equation.
+        """
         return (self.__left_side() + " = " + self.__right_side()).replace(".0 ", ' ').replace(".0x", 'x').replace(".0\n", '\n')
     
     def degree(self) -> int:
@@ -175,7 +184,15 @@ class Equation():
             int : polynomial degree"""
         return self._deg
 
-    def simplify_left(self, coeff, expo, sign):
+    def __simplify_left(self, coeff, expo, sign):
+        """Inserts the simplification substring on the left
+        side of the equation.
+
+        Args:
+            coeff (float): value that will be added or substracted.
+            expo (int): exponant of the value to manipulate.
+            sign (char): `+` or `-` that will be displayed.
+        """
         value = self.__left_side()
         index = value.find(f"x^{expo}")
         if expo == 0:
@@ -191,7 +208,15 @@ class Equation():
         stepped = value[:index + 3] + to_add + value[index + 3:]
         return stepped
     
-    def simplify_right(self, coeff, expo, sign):
+    def __simplify_right(self, coeff, expo, sign):
+        """Inserts the simplification substring on the right
+        side of the equation.
+
+        Args:
+            coeff (float): value that will be added or substracted.
+            expo (int): exponant of the value to manipulate.
+            sign (char): `+` or `-` that will be displayed.
+        """
         value = self.__right_side()
         index = value.find(f"x^{expo}")
         if expo == 0:
@@ -207,10 +232,18 @@ class Equation():
         stepped = value[:index + 3] + to_add + value[index + 3:]
         return stepped
 
-    def simplify_step(self, coeff, expo, sign):
+    def __simplify_step(self, coeff, expo, sign):
+        """Displays the simplification step in the format
+        of ax + b (-c) = c (-c)
+
+        Args:
+            coeff (float): value that will be added or substracted.
+            expo (int): exponant of the value to manipulate.
+            sign (char): `+` or `-` that will be displayed.
+        """
         if coeff == 0:
             return
-        value = self.simplify_left(coeff, expo, sign) + " = " + self.simplify_right(coeff, expo, sign)
+        value = self.__simplify_left(coeff, expo, sign) + " = " + self.__simplify_right(coeff, expo, sign)
         value = value.replace(".0 ", ' ').replace(".0x", 'x').replace(".0\n", '\n')
         print(f"Medium step       : {value}")
 
@@ -219,40 +252,42 @@ class Equation():
         to 0."""
         for i in range(0, self._deg + 1):
             if self._right[i].coeff < 0:
-                self.simplify_step(self._right[i].coeff, i, '+')
-                coeff = self._left[i].coeff + self._right[i].coeff
+                self.__simplify_step(abs(self._right[i].coeff), i, '+')
+                coeff = self._left[i].coeff + abs(self._right[i].coeff)
                 self._right[i] = Polynomial(0, i)
                 self._left[i] = Polynomial(coeff, i)
             elif self._right[i].coeff > 0:
-                self.simplify_step(self._right[i].coeff, i, '-')
-                coeff = self._left[i].coeff - self._right[i].coeff
+                self.__simplify_step(abs(self._right[i].coeff), i, '-')
+                coeff = self._left[i].coeff - abs(self._right[i].coeff)
                 self._right[i] = Polynomial(0, i)
                 self._left[i] = Polynomial(coeff, i)
 
     def solve(self):
         """Solves the equation."""
-        """if self._deg1.coeff == 0 and self._deg2.coeff == 0: #Not an equation (a=b)
-            if self._res0.coeff == self._deg0.coeff:
+        if self._deg == 0: #not an equation
+            if self._left[0] == self._right[0]:
                 print("Any real number is a solution.")
             else:
                 print("No Solutions !")
-        elif self._deg2.coeff == 0: #equation is ax + b = y
+        elif self._deg == 1: #ax + b = 0
             #ax = y - b
-            right = self._deg0.coeff * -1
-            #x = (y - b) / a
-            if self._deg1.coeff == 0:
+            result = self._left[0].coeff * -1
+            if self._left[1].coeff == 0:
                 print("No Solutions !")
                 return
-            right /= self._deg1.coeff
-            soluce = right
-            print(f"Solution          : {soluce}")
-        else: #equation is ax^2 + bx + c = y
+            #x = (y - b) / a
+            result /= self._left[1].coeff
+            print(f"Solution          : {result}")
+        elif self._deg == 2: #ax^2 + bx + c = 0
+            a = self._left[0].coeff
+            b = self._left[1].coeff
+            c = self._left[2].coeff
             #delta = b^2 - (4ac)
-            discriminant = self._deg1.coeff  ** 2 - (4 * self._deg0.coeff * self._deg2.coeff)
+            discriminant = b ** 2 - (4 * a * c)
             #Quadratic
-            #x=(−b±sqrt(b2−4ac))/2c
-            x1 = (-self._deg1.coeff + ft_sqrt(discriminant) ) / (2 * self._deg2.coeff)
-            x2 = (-self._deg1.coeff - ft_sqrt(discriminant) ) / (2 * self._deg2.coeff)
+            #x=(−b±sqrt(delta))/2c
+            x1 = (-b + ft_sqrt(discriminant) ) / (2 * c)
+            x2 = (-b - ft_sqrt(discriminant) ) / (2 * c)
             if discriminant == 0:
                 print("Discriminant is equal to 0, only one solution is :")
                 print(x1)
@@ -261,7 +296,7 @@ class Equation():
                 print(f"({format_fraction(x1)}, {format_fraction(x2)})")
             elif discriminant < 0:
                 print("Discriminant is strictly negative, the two complex solutions are :")
-                print(f"({format_complex(x1)}, {format_complex(x2)})")"""
+                print(f"({format_complex(x1)}, {format_complex(x2)})")
 
     def run(self):
         """Runs the whole sequence."""

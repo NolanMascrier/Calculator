@@ -23,7 +23,7 @@ class Polynomial():
             return ""
         val = ""
         if self._exponant == 0:
-            return str(self._coeff)
+            return str(abs(self._coeff))
         if abs(self._coeff) == 1:
             val += self._variable
         else:
