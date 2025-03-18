@@ -1,8 +1,8 @@
 """Class to hold equations"""
 
-from ft_maths import ft_sqrt
 from fractions import Fraction
-from Polynomial import Polynomial
+from equations.ft_maths import ft_sqrt
+from equations.Polynomial import Polynomial
 
 MAX_DEGREE = 2
 

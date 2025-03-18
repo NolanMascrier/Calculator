@@ -1,8 +1,8 @@
 import sys
 #Beurk le regex
 import re
-from Polynomial import Polynomial
-from Equation import Equation
+from equations.Polynomial import Polynomial
+from equations.Equation import Equation
 
 def extract_terms(expression, regex):
         """Extracts the Polynomials according to the regex"""
@@ -23,7 +23,7 @@ def extract_terms(expression, regex):
             terms.append(Polynomial(coeff, exponent))
         return terms
 
-def parse(equation):
+def parse_equation(equation):
     """Parses the equation and creates the polynomials using regex"""
     equation = equation.replace(" ", "")
     left, right = equation.split("=")
