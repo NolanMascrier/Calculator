@@ -9,7 +9,7 @@ TOKEN_PATTERNS = [
     ("FUNC_DEF", re.compile(r"[a-zA-Z_][a-zA-Z_0-9]*\(x\)")),
     ("FUNC_CALL", re.compile(r"[a-zA-Z_][a-zA-Z_0-9]*\(.*?\)")), 
     ("VAR", re.compile(r"[a-zA-Z_][a-zA-Z_0-9]*")),
-    ("OP", re.compile(r"\+|\-|\*\*|\*|/|%|\^|=")),
+    ("OP", re.compile(r"\+|\-|\*\*|\*|/|%|\^|=|\?")),
     ("PAREN", re.compile(r"[\(\)]")),
 ]
 
@@ -18,6 +18,8 @@ def parse(tokens):
         tokens = tokens[0]
     if any(t[0] == "FUNC_DEF" for t in tokens):
         return {"type": "FUNC_DEF", "tokens": tokens}
+    if (tokens.count(("OP", "=")) == 1 and tokens[0][0] == "VAR" and tokens[1] == ("OP", "=")) and tokens[2] == ("OP", "?"):
+        return {"type": "VARIABLE_DISPLAY", "tokens": tokens}
     if (tokens.count(("OP", "=")) == 1 and tokens[0][0] == "VAR" and tokens[1] == ("OP", "=")):
         return {"type": "ASSIGNMENT", "tokens": tokens}
     if tokens.count(("OP", "=")) == 1:
@@ -67,7 +69,11 @@ def handle_implicit_multiplication(tokens):
     """ Detects cases like 3x and converts them into 3 * x """
     new_tokens = []
     for i in range(len(tokens)):
-        if i > 0 and tokens[i - 1][0] == "INTEGER" and tokens[i][0] == "VAR":
+        if i > 0 and tokens[i - 1][0] in ["INTEGER", "DECIMAL"] and tokens[i][1] == "x":
+            new_tokens.append(tokens[i - 1])
+            new_tokens.append(("OP", "*"))  # Insert implicit multiplication
+            new_tokens.append(("X", "x"))
+        elif i > 0 and tokens[i - 1][0] in ["INTEGER", "DECIMAL"] and tokens[i][0] == "VAR":
             new_tokens.append(tokens[i - 1])
             new_tokens.append(("OP", "*"))  # Insert implicit multiplication
         else:

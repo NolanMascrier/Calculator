@@ -2,17 +2,31 @@
 from equations.Equation_solver import parse_equation
 from Parser import tokenize, parse
 
+from maths.Complex import Complex
+from maths.Operations import calculate
+
+from config import store, retrieve, display
+
 def execute(type, tokens, start_value):
     match(type):
         case "FUNC_DEF":
             print(f"Defining a function with tokens : \n{tokens}")
+        case "VARIABLE_DISPLAY":
+            value = retrieve(tokens[0][1])
+            if value is None:
+                print("No such variable.")
+            else:
+                print(value)
         case "ASSIGNMENT":
-            print(f"Defining a variable with tokens : \n{tokens}")
+            store(tokens[2][1], tokens[0][1])
         case "EQUATION":
             print(f"Resolving an equation with tokens : \n{tokens}")
             parse_equation(start_value)
         case "EXPRESSION":
-            print(f"Doing basic maths : \n{tokens}")
+            if tokens[1] == '?':
+                display()
+            else:
+                calculate(tokens)
         case _:
             print(f"Unknown value : {type}. Tokens :\n{tokens}")
 
