@@ -1,11 +1,11 @@
 import re
 
-# Define token types and their regex patterns
 TOKEN_PATTERNS = [
+    ("WHITESPACE", re.compile(r"\s")),
     ("MATRIX", re.compile(r"\[\[.*?\]\]")),
-    ("COMPLEX", re.compile(r"\d*i")),
-    ("DECIMAL", re.compile(r"\d+\.\d+")),
-    ("INTEGER", re.compile(r"\d+")),
+    ("COMPLEX", re.compile(r"-?\d*i")),
+    ("DECIMAL", re.compile(r"-?\d+\.\d+")),
+    ("INTEGER", re.compile(r"-?\d+")),
     ("FUNC_DEF", re.compile(r"[a-zA-Z_][a-zA-Z_0-9]*\(x\)")),
     ("FUNC_CALL", re.compile(r"[a-zA-Z_][a-zA-Z_0-9]*\(.*?\)")), 
     ("VAR", re.compile(r"[a-zA-Z_][a-zA-Z_0-9]*")),
@@ -14,6 +14,16 @@ TOKEN_PATTERNS = [
 ]
 
 def parse(tokens):
+    """Parse the token list and returns its mathematical type,
+    a FUNC_DEF, a FUNC_CALL, an EQUATION, a VARIABLE_DISPLAY,
+    an ASSIGNEMENT or an EXPRESSION. Returns EXPRESSION by
+    default.
+        
+    Args:
+        tokens (list): List of tokens.
+        
+    Returns:
+        tuple: Filled list."""
     if isinstance(tokens, list) and len(tokens) == 1:
         tokens = tokens[0]
     if any(t[0] == "FUNC_DEF" for t in tokens):
@@ -36,6 +46,14 @@ def parse(tokens):
     return {"type": "EXPRESSION", "tokens": tokens}
 
 def tokenize(input):
+    """Takes the user input, parses it and creates a
+    token list.
+    
+    Args:
+        input (str): User input.
+        
+    Returns:
+        list: A list of usable tokens."""
     tokens = []
     index = 0
     while index < len(input):
@@ -44,14 +62,29 @@ def tokenize(input):
             match = pattern.match(input, index)
             if match:
                 value = match.group(0)
+                if token_type == "OP" and value == "-":
+                    if not tokens or tokens[-1][0] in {"OP", "PAREN"}:
+                        next_match = re.match(r"\d+(\.\d+)?", input[index + 1:])
+                        if next_match:
+                            value += next_match.group(0)
+                            token_type = "DECIMAL" if "." in value else "INTEGER"
+                            index += len(next_match.group(0))
                 tokens.append((token_type, value))
                 index += len(value)
                 break
         if not match:
             raise ValueError(f"Unexpected character at index {index}: {input[index]}")
-    return handle_implicit_multiplication(group_parentheses(tokens))
+    return validate(group_parentheses(handle_implicit_multiplication((fill_missing(tokens)))))
 
 def group_parentheses(tokens):
+    """Regroup the list so that values between parenthesis are
+    inside a sublist.
+    
+    Args:
+        tokens (list): List of tokens.
+        
+    Returns:
+        list: Regrouped list."""
     stack = [[]]
     for token in tokens:
         if token[0] == "PAREN" and token[1] == "(":
@@ -66,16 +99,66 @@ def group_parentheses(tokens):
     return stack[0]
 
 def handle_implicit_multiplication(tokens):
-    """ Detects cases like 3x and converts them into 3 * x """
+    """Detects cases like 3x or (x+1)2 and converts them into 3 * x or (x+1) * 2
+        
+    Args:
+        tokens (list): List of tokens.
+        
+    Returns:
+        list: Filled list."""
+    new_tokens = []
+    i = 0
+    while i < len(tokens):
+        token = tokens[i]
+        if i > 0 and tokens[i - 1][0] in ["INTEGER", "DECIMAL"] and token[0] == "VAR":
+            new_tokens.append(("OP", "*"))
+            new_tokens.append(token)
+        elif i > 0 and tokens[i - 1][0] in ["INTEGER", "DECIMAL"] and token == ["PAREN", "("]:
+            new_tokens.append(("OP", "*"))
+            new_tokens.append(token)
+        else:
+            new_tokens.append(token)
+        i += 1
+    return new_tokens
+
+def fill_missing(tokens):
+    """Adds missing tokens ('OP', '+') in the equation. Also deletes
+    uneeded whitespaces tokens.
+    
+    Args:
+        tokens (list): List of tokens.
+        
+    Returns:
+        list: Filled list.
+    """
     new_tokens = []
     for i in range(len(tokens)):
-        if i > 0 and tokens[i - 1][0] in ["INTEGER", "DECIMAL"] and tokens[i][1] == "x":
-            new_tokens.append(tokens[i - 1])
-            new_tokens.append(("OP", "*"))  # Insert implicit multiplication
-            new_tokens.append(("X", "x"))
-        elif i > 0 and tokens[i - 1][0] in ["INTEGER", "DECIMAL"] and tokens[i][0] == "VAR":
-            new_tokens.append(tokens[i - 1])
-            new_tokens.append(("OP", "*"))  # Insert implicit multiplication
-        else:
+        if tokens[i][0] != "WHITESPACE":
             new_tokens.append(tokens[i])
+        if i + 1 < len(tokens):
+            if tokens[i + 1][0] not in ["OP", "FUNC_CALL", "FUNC_DEF", "VAR", "PAREN", "MATRIX"]:
+                if tokens[i + 1][1][0] == '-':
+                    new_tokens.append(('OP', '+'))
     return new_tokens
+
+def validate(tokens):
+    """Checks the token list, and raises an error if needed.
+
+    Args:
+        tokens (list): Tokens to validate.
+
+    Raises:
+        SyntaxError: invalid syntax of the operation.
+    
+    Returns:
+        list: unchange list.
+    """
+    for i in range(len(tokens)):
+        if isinstance(tokens[i], list):
+            validate(tokens[i])
+        elif i + 1 < len(tokens):
+            if tokens[i][0] != 'OP' and tokens[i + 1][0] != 'OP':
+                raise SyntaxError("Two values, no operators !")
+            if tokens[i][0] == 'OP' and tokens[i + 1][0] == 'OP':
+                raise SyntaxError("Two operators, no values !") 
+    return tokens

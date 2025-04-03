@@ -20,7 +20,6 @@ def execute(type, tokens, start_value):
         case "ASSIGNMENT":
             store(tokens[2][1], tokens[0][1])
         case "EQUATION":
-            print(f"Resolving an equation with tokens : \n{tokens}")
             parse_equation(start_value)
         case "EXPRESSION":
             if tokens[1] == '?':
@@ -33,12 +32,15 @@ def execute(type, tokens, start_value):
 if __name__ == "__main__":
     while True:
         try:
-            val = input("==> : ").strip().replace(" ", '')
-            if val == "":
+            val = input("==> : ")
+            if val.strip().replace(" ", '') == "":
                 continue
-            tokens = tokenize(val)
-            parsed = parse(tokens)
-            execute(parsed["type"], parsed["tokens"], val)
+            try:
+                tokens = tokenize(val)
+                parsed = parse(tokens)
+                execute(parsed["type"], parsed["tokens"], val)
+            except SyntaxError as e:
+                print(f"Error - Invalid syntax : {e}")
         except EOFError:
             print("\nExiting ...")
             break
