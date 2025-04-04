@@ -7,6 +7,8 @@ from maths.Operations import calculate
 
 from config import store, retrieve, display
 
+from syntax_tree import build_ast
+
 def execute(type, tokens, start_value):
     match(type):
         case "FUNC_DEF":
@@ -18,14 +20,23 @@ def execute(type, tokens, start_value):
             else:
                 print(value)
         case "ASSIGNMENT":
-            store(tokens[2][1], tokens[0][1])
+            print(tokens)
+            name = tokens[0][1]
+            tokens.pop(0)
+            tokens.pop(0)
+            print(tokens)
+            ast = build_ast(tokens)
+            print(ast)
+            store(ast, name)
         case "EQUATION":
             parse_equation(start_value)
         case "EXPRESSION":
             if tokens[1] == '?':
                 display()
             else:
-                calculate(tokens)
+                ast = build_ast(tokens)
+                result = ast.solve()
+                print(result)
         case _:
             print(f"Unknown value : {type}. Tokens :\n{tokens}")
 
@@ -41,6 +52,10 @@ if __name__ == "__main__":
                 execute(parsed["type"], parsed["tokens"], val)
             except SyntaxError as e:
                 print(f"Error - Invalid syntax : {e}")
+            except ValueError as e:
+                print(f"Error - Invalid value : {e}")
+            except AttributeError as e:
+                print(f"Error - Unsupporte operation : {e}")
         except EOFError:
             print("\nExiting ...")
             break

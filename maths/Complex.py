@@ -7,9 +7,13 @@ class Complex():
         self._imag = im
 
     def __str__(self):
+        if self.imag == 0 and self.real == 0:
+            return "0"
         if self.imag == 0:
             return str(self._real)
-        return str(self.real) + ("+" if self.imag >= 0 else "-") + str(self.imag) + "i"
+        if self.real == 0:
+            return ("" if self.imag >= 0 else "-") + str(abs(self.imag)) + "i"
+        return str(self.real) + ("+" if self.imag >= 0 else "-") + str(abs(self.imag)) + "i"
 
     def __add__(self, other):
         if isinstance(other, Complex):
@@ -59,12 +63,12 @@ class Complex():
         return Complex(self.real % other, self.imag % other) if isinstance(other, (int, float)) else None
     
     def __pow__(self, other):
-        if isinstance(other, int):
+        if isinstance(other, Complex) and other.imag == 0:
             result = Complex(1, 0)
-            for _ in range(other):
+            for _ in range(other.real):
                 result *= self
             return result
-        return None
+        raise ValueError("Unsupported value for power")
     
     def read(self, value):
         if value[0] == "INTEGER":
