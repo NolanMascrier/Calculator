@@ -62,7 +62,10 @@ class Node:
             case '^':
                 return left_value ** right_value
             case '**':
-                return left_value @ right_value
+                if isinstance(left_value, Matrix):
+                    return left_value @ right_value
+                else:
+                    return left_value ** right_value
             case _:
                 raise AttributeError(f"Unknown operator {self.value} !")
 
