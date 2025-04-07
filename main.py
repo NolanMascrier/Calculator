@@ -3,13 +3,22 @@ from equations.Equation_solver import parse_equation
 from Parser import tokenize, parse
 
 from maths.Complex import Complex
-from maths.Operations import calculate
 
 from config import store, retrieve, display
 
 from syntax_tree import build_ast
 
 def execute(type, tokens, start_value):
+    """Executes the command. 
+    
+    Args:
+        type (string): Type of the command. Can be FUNC_DEF, VARIABLE_DISPlAY, \
+        ASSIGNMENT, EQUATION or EXPRESSION.
+        tokens (list|tuple): list of tokens to use. Can also be a single tuple \
+        in some cases. 
+        start_value (str): backup of the original input. Only used for equation \
+        solving.
+    """
     match(type):
         case "FUNC_DEF":
             print(f"Defining a function with tokens : \n{tokens}")

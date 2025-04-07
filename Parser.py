@@ -69,6 +69,11 @@ def tokenize(input):
                             value += next_match.group(0)
                             token_type = "DECIMAL" if "." in value else "INTEGER"
                             index += len(next_match.group(0))
+                if token_type == "COMPLEX":
+                    if value == 'i':
+                        value = '1i'
+                    elif value == '-i':
+                        value = '-1i'
                 tokens.append((token_type, value))
                 index += len(value)
                 break

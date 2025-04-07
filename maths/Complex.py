@@ -1,8 +1,12 @@
 """Class for complexes values."""
 
 class Complex():
-    """Creates a complex number."""
-    def __init__(self, real, im):
+    """Creates a complex number.
+    
+    Args:
+        real (float): Real part of the complex.
+        im (float, optionnal): Imaginary part of the complex. Defaults to 0."""
+    def __init__(self, real, im = 0):
         self._real = real
         self._imag = im
 
@@ -12,8 +16,8 @@ class Complex():
         if self.imag == 0:
             return str(self._real)
         if self.real == 0:
-            return ("" if self.imag >= 0 else "-") + str(abs(self.imag)) + "i"
-        return str(self.real) + ("+" if self.imag >= 0 else "-") + str(abs(self.imag)) + "i"
+            return ("" if self.imag >= 0 else "-") + (str(abs(self.imag)) if abs(self.imag) != 1 else "") + "i"
+        return str(self.real) + ("+" if self.imag >= 0 else "-") + (str(abs(self.imag)) if abs(self.imag) != 1 else "") + "i"
 
     def __add__(self, other):
         if isinstance(other, Complex):
@@ -36,6 +40,11 @@ class Complex():
         return Complex(other - self.real, -self.imag)
 
     def __truediv__(self, other):
+        """\/ operator overload.
+
+        Raises: 
+            ZeroDivisionError: Attempting to divide by zero.
+        """
         if isinstance(other, Complex):
             a, b = self.real, self.imag
             c, d = other.real, other.imag
@@ -71,6 +80,14 @@ class Complex():
         raise ValueError("Unsupported value for power")
     
     def read(self, value):
+        """Reads a Complex number from a token.
+        
+        Args:
+            value: Token to read.
+            
+        Raises:
+            ValueError: Unknown token.
+        """
         if value[0] == "INTEGER":
             self._real = int(value[1])
             self._imag = 0
