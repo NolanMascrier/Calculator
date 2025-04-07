@@ -60,16 +60,6 @@ class Node:
         left_value = self.left.solve(x)
         right_value = self.right.solve(x)
         match (self.value):
-            case '+':
-                return left_value + right_value
-            case '-':
-                return left_value - right_value
-            case '*':
-                return left_value * right_value
-            case '/':
-                return left_value / right_value
-            case '%':
-                return left_value % right_value
             case '^':
                 return left_value ** right_value
             case '**':
@@ -77,6 +67,16 @@ class Node:
                     return left_value @ right_value
                 else:
                     return left_value ** right_value
+            case '*':
+                return left_value * right_value
+            case '/':
+                return left_value / right_value
+            case '%':
+                return left_value % right_value
+            case '+':
+                return left_value + right_value
+            case '-':
+                return left_value - right_value
             case _:
                 raise AttributeError(f"Unknown operator {self.value} !")
 
@@ -147,7 +147,10 @@ def builder(index, tokens, min_precedence=1):
         if precedence[op_value] < min_precedence:
             break
         index += 1
-        next_min_precedence = precedence[op_value] + (1 if op_value in ['^', '**'] else 0)
+        if op_value in ['^', '**']:
+            next_min_precedence = precedence[op_value]
+        else:
+            next_min_precedence = precedence[op_value] + 1
         right, index = builder(index, tokens, next_min_precedence)
         left = Node(op_value, left, right)
     return left, index

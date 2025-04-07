@@ -71,6 +71,17 @@ class Complex():
     def __mod__(self, other):
         return Complex(self._real % other, self._imag % other) if isinstance(other, (int, float)) else None
     
+    def _pow_int(self, n):
+        """Handles integer exponentiation."""
+        result = Complex(1, 0)
+        base = self
+        while n > 0:
+            if n % 2 == 1:
+                result *= base
+            base *= base
+            n //= 2
+        return result
+
     def __pow__(self, other):
         if isinstance(other, Complex) and other._imag == 0:
             result = Complex(1, 0)
@@ -83,9 +94,18 @@ class Complex():
         if self._imag != 0:
             raise ValueError("Unsupported value for power")
         result = Complex(1, 0)
-        for _ in range(self._real):
+        for _ in range(round(self._real)):
             result *= self
         return result
+
+    def __lt__(self, other):
+        if isinstance(other, (int, float)):
+            other = Complex(other)
+        if not isinstance(other, Complex):
+            raise ValueError("cannot compare those two values")
+        if self._real < other.real:
+            return True
+        return False 
     
     def read(self, value):
         """Reads a Complex number from a token.

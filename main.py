@@ -5,8 +5,8 @@ from execution import execute
 if __name__ == "__main__":
     while True:
         try:
-            val = input("==> : ")
-            if val.strip().replace(" ", '') == "":
+            val = input("==> : ").strip().replace(" ", '')
+            if val == "":
                 continue
             try:
                 tokens = tokenize(val)

@@ -135,13 +135,18 @@ def fill_missing(tokens):
         list: Filled list.
     """
     new_tokens = []
-    for i in range(len(tokens)):
+    i = 0
+    while i < len(tokens):
         if tokens[i][0] != "WHITESPACE":
-            new_tokens.append(tokens[i])
-        if i + 1 < len(tokens):
-            if tokens[i + 1][0] not in ["OP", "FUNC_CALL", "FUNC_DEF", "VAR", "PAREN", "MATRIX"]:
-                if tokens[i + 1][1][0] == '-':
-                    new_tokens.append(('OP', '+'))
+            if tokens[i][0] not in ["OP", "FUNC_CALL", "FUNC_DEF", "VAR", "PAREN", "MATRIX"] \
+                    and tokens[i][1][0] == '-':
+                new_tokens.append(('OP', '-'))
+                new_tokens.append((tokens[i][0], tokens[i][1][1:]))
+            else:
+                new_tokens.append(tokens[i])
+        i += 1
+    if new_tokens[0] == ('OP', '-'):
+        new_tokens.insert(0, ('INTEGER', '0'))
     return new_tokens
 
 def validate(tokens):

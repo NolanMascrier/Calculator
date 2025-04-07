@@ -47,6 +47,7 @@ def display_curve(tree, name):
     plt.title('Plot from AST')
     plt.grid(True)
     plt.legend()
+    plt.get_current_fig_manager().set_window_title(f'Plotting curve for {name}(x)')
     plt.show()
 
 def execute(type, tokens, start_value):
@@ -95,15 +96,14 @@ def execute(type, tokens, start_value):
                 end = tokens[1].find(")")
                 if start == -1 or end == -1 or start == end:
                     raise IndexError("x of function couldn't be found.")
-                
                 name = tokens[1][:start]
                 value = Complex(float(tokens[1][start + 1:end]))
-
                 ast = retrieve(name, isFunction=True)
                 result = ast.solve(value)
                 print(result)
             else:
                 ast = build_ast(tokens)
+                print(ast)
                 if isinstance(ast, tuple):  # If build_ast returned (Node, index)
                     ast = ast[0]
                 if isinstance(ast, Node):
