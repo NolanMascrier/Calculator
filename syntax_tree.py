@@ -11,6 +11,15 @@ precedence = {
     '^': 3, '**': 3
 }
 
+class FunctionCall:
+    """Stores Function calls."""
+    def __init__(self, ast, value):
+        self.ast = ast
+        self.value = value
+
+    def __str__(self):
+        return f"{self.ast}({self.value})"
+
 class Node:
     """Abstract Syntax Tree class."""
     def __init__(self, value, left=None, right=None):
@@ -40,14 +49,16 @@ class Node:
             Complex | Matrix : computed result either as a Complex or \
             a Matrix.
         """
+        if isinstance(self.value, FunctionCall):
+            return self.value.ast.solve(self.value.value)
         if self.left is None and self.right is None:
             if self.value == 'x' and x is not None:
                 return x
             elif self.value == 'x' and x is None:
                 raise ValueError("x used outside of an equation or a function !")
             return self.value
-        left_value = self.left.solve()
-        right_value = self.right.solve()
+        left_value = self.left.solve(x)
+        right_value = self.right.solve(x)
         match (self.value):
             case '+':
                 return left_value + right_value
@@ -69,30 +80,61 @@ class Node:
             case _:
                 raise AttributeError(f"Unknown operator {self.value} !")
 
-def parse_expr(index, tokens, min_precedence=1):
+def builder(index, tokens, min_precedence=1):
+    """Recursively parses the token list to create the \
+    Abstract Syntax Tree.
+
+    Args:
+        index (int): curent index in the tree. 
+        tokens (list | tuple): The list of tokens. Can be a \
+        singular tuple in some cases.
+        min_precedence (int, optionnal) : Minimum precedence found. \
+        Defaults to 1.
+    
+    Returns:
+        (Node, int): returns the Tree and the last updated index for \
+        recursive use.
+    """
     token = tokens[index]
+    
     if not isinstance(token, tuple) and not isinstance(token, list):
         if tokens[0] == 'VAR':
             return retrieve(tokens[1]).solve()
+        elif tokens[0] == "FUNC_CALL":
+            start = tokens[1].find("(")
+            end = tokens[1].find(")")
+            if start == -1 or end == -1 or start == end:
+                raise IndexError("Value for x of function call couldn't be found.")
+            value = tokens[1][start + 1:end]
+            return retrieve(tokens[1], True).solve(float(value))
         else:
             return Node(token), index
+        
     if isinstance(token, list):
         left = build_ast(token)
     else:
         token_type, token_value = token
         if token_type == "INTEGER":
-            left = Node(Complex(int(token_value), 0))
+            left = Node(Complex(int(token_value)))
         elif token_type == "DECIMAL":
-            left = Node(Complex(float(token_value), 0))
+            left = Node(Complex(float(token_value)))
         elif token_type == "COMPLEX":
             left = Node(Complex(0, int(token_value[:-1])))
         elif token_type == "MATRIX":
             left = Node(Matrix(token_value))
         elif token_type in ("VAR", "FUNC_CALL"):
-            if token_type == 'x':
+            if token_value == 'x':
                 left = Node('x')
-            else:
+            elif token_type == "VAR":
                 left = Node(retrieve(token_value).solve())
+            elif token_type == "FUNC_CALL":
+                start = token_value.find("(")
+                end = token_value.find(")")
+                if start == -1 or end == -1 or start == end:
+                    raise IndexError("Value for x of function call couldn't be found.")
+                value = token_value[start + 1:end]
+                ast = retrieve(token_value[:start], True)
+                left = Node(FunctionCall(ast, Complex(float(value))))
         else:
             left = Node(token_value)
     index += 1
@@ -106,11 +148,21 @@ def parse_expr(index, tokens, min_precedence=1):
             break
         index += 1
         next_min_precedence = precedence[op_value] + (1 if op_value in ['^', '**'] else 0)
-        right, index = parse_expr(index, tokens, next_min_precedence)
+        right, index = builder(index, tokens, next_min_precedence)
         left = Node(op_value, left, right)
     return left, index
 
 def build_ast(tokens):
+    """Inits the index for the builder, and returns the resulting \
+    tree.
+    
+    Args:
+        tokens (list | tuple) : The list of tokens. Can be a \
+        single tuple in some cases.
+    
+    Returns:
+        Node : built tree, ready to be solved or stored.
+    """
     if isinstance(tokens, tuple):  
-        return parse_expr(1, tokens)[0]
-    return parse_expr(0, tokens)[0]
+        return builder(1, tokens)
+    return builder(0, tokens)[0]

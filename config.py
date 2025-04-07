@@ -18,12 +18,23 @@ def store(value, name, isFunction = False):
         SyntaxError : The variable/function has a forbidden name (x)
     """
     global VARIABLES
+    flag = False
     if name.lower() == 'x':
         raise SyntaxError(f"Cannot use {name} as a variable name !")
     if isFunction:
-        FUNCTIONS.append([name, value])
+        for data in FUNCTIONS:
+            if data[0] == name:
+                flag = True
+                data[1] = value
+        if flag is False:
+            FUNCTIONS.append([name, value])
     else:
-        VARIABLES.append([name, value])
+        for data in VARIABLES:
+            if data[0] == name:
+                flag = True
+                data[1] = value
+        if flag is False:
+            VARIABLES.append([name, value])
 
 def display():
     """Displays the stored variable and functions.
@@ -35,7 +46,7 @@ def display():
     for data in FUNCTIONS:
         print(f"{str(data[0])}(x) = {str(data[1])}")
 
-def retrieve(key, isFunction = False, x = None):
+def retrieve(key, isFunction = False):
     """Retrieve and solve a function or a variable.
     
     Args:
@@ -43,19 +54,23 @@ def retrieve(key, isFunction = False, x = None):
         isFunction (bool, optionnal) : if set to `True`, will \
         attempt to search for a function rather than a variable. \
         Defaults to False.
-        x (Complex | Matrix | None) : value of `x` for solving \
-        functions. Defaults to None.
     
+    Raises:
+        IndexError : Unknown key for VARIABLE or FUNCTIONS.      
+
     Returns:
-        Complex | Matrix | None : Computed stored variable or \
-        function. Defaults to None if nothing was found.
+        Complex | Matrix : Computed stored variable or \
+        function.
     """
     if isFunction:
+        index = key.find("(")
+        if index != -1:
+            key = key[:index]
         for data in FUNCTIONS:
             if data[0].lower() == key.lower():
-                return data[1].solve(x)
+                return data[1]
     else:
         for data in VARIABLES:
             if data[0].lower() == key.lower():
-                return data[1].solve()
-    return None
+                return data[1]
+    raise IndexError(key)

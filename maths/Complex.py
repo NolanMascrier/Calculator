@@ -11,19 +11,19 @@ class Complex():
         self._imag = im
 
     def __str__(self):
-        if self.imag == 0 and self.real == 0:
+        if self._imag == 0 and self._real == 0:
             return "0"
-        if self.imag == 0:
+        if self._imag == 0:
             return str(self._real)
-        if self.real == 0:
-            return ("" if self.imag >= 0 else "-") + (str(abs(self.imag)) if abs(self.imag) != 1 else "") + "i"
-        return str(self.real) + ("+" if self.imag >= 0 else "-") + (str(abs(self.imag)) if abs(self.imag) != 1 else "") + "i"
+        if self._real == 0:
+            return ("" if self._imag >= 0 else "-") + (str(abs(self._imag)) if abs(self._imag) != 1 else "") + "i"
+        return str(self._real) + ("+" if self._imag >= 0 else "-") + (str(abs(self._imag)) if abs(self._imag) != 1 else "") + "i"
 
     def __add__(self, other):
         if isinstance(other, Complex):
-            return Complex(self.real + other.real, self.imag + other.imag)
+            return Complex(self._real + other._real, self._imag + other._imag)
         elif isinstance(other, (int, float)):
-            return Complex(self.real + other, self.imag)
+            return Complex(self._real + other, self._imag)
         return None
     
     def __radd__(self, other):
@@ -31,13 +31,13 @@ class Complex():
 
     def __sub__(self, other):
         if isinstance(other, Complex):
-            return Complex(self.real - other.real, self.imag - other.imag)
+            return Complex(self._real - other._real, self._imag - other._imag)
         elif isinstance(other, (int, float)):
-            return Complex(self.real - other, self.imag)
+            return Complex(self._real - other, self._imag)
         return None
     
     def __rsub__(self, other):
-        return Complex(other - self.real, -self.imag)
+        return Complex(other - self._real, -self._imag)
 
     def __truediv__(self, other):
         """\/ operator overload.
@@ -46,8 +46,8 @@ class Complex():
             ZeroDivisionError: Attempting to divide by zero.
         """
         if isinstance(other, Complex):
-            a, b = self.real, self.imag
-            c, d = other.real, other.imag
+            a, b = self._real, self._imag
+            c, d = other._real, other._imag
             denominator = c * c + d * d
             if denominator == 0:
                 raise ZeroDivisionError("division by zero")
@@ -55,29 +55,37 @@ class Complex():
         elif isinstance(other, (int, float)):
             if other == 0:
                 raise ZeroDivisionError("division by zero")
-            return Complex(self.real / other, self.imag / other)
+            return Complex(self._real / other, self._imag / other)
         return None
     
     def __mul__(self, other):
         if isinstance(other, Complex):
-            return Complex(self.real * other.real - self.imag * other.imag, self.real * other.imag + self.imag * other.real)
+            return Complex(self._real * other._real - self._imag * other._imag, self._real * other._imag + self._imag * other._real)
         elif isinstance(other, (int, float)):
-            return Complex(self.real * other, self.imag * other)
+            return Complex(self._real * other, self._imag * other)
         return None
     
     def __rmul__(self, other):
         return self * other
     
     def __mod__(self, other):
-        return Complex(self.real % other, self.imag % other) if isinstance(other, (int, float)) else None
+        return Complex(self._real % other, self._imag % other) if isinstance(other, (int, float)) else None
     
     def __pow__(self, other):
-        if isinstance(other, Complex) and other.imag == 0:
+        if isinstance(other, Complex) and other._imag == 0:
             result = Complex(1, 0)
-            for _ in range(other.real):
+            for _ in range(other._real):
                 result *= self
             return result
         raise ValueError("Unsupported value for power")
+    
+    def __rpow__(self, other):
+        if self._imag != 0:
+            raise ValueError("Unsupported value for power")
+        result = Complex(1, 0)
+        for _ in range(self._real):
+            result *= self
+        return result
     
     def read(self, value):
         """Reads a Complex number from a token.

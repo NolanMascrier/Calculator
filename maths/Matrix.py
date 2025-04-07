@@ -104,9 +104,9 @@ class Matrix():
             list[list]: An empty matrix as a list."""
         reference = []
         matrix = []
-        for i in range(cols):
+        for _ in range(cols):
             reference.append(0)
-        for i in range(lines):
+        for _ in range(lines):
             matrix.append(reference.copy())
         return matrix
 
@@ -163,7 +163,6 @@ class Matrix():
         matr = self.__generate_empty_matrix(self._columns, other._lines)
         for row in range(other._lines):
             for column in range(self._columns):
-                print(f"C({row})({column})")
                 for value in range(len(other.values)):
                     matr[row][column] += self._values[row][value] * other.values[value][column]
         return Matrix(matr, False)

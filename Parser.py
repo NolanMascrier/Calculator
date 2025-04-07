@@ -41,8 +41,6 @@ def parse(tokens):
                 continue
             (right if split else left).append(t)
         return {"type": "EQUATION", "tokens": tokens}
-    if any(t[0] == "FUNC_CALL" for t in tokens):
-        return {"type": "FUNC_CALL", "tokens": tokens}
     return {"type": "EXPRESSION", "tokens": tokens}
 
 def tokenize(input):
