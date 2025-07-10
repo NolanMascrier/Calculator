@@ -59,7 +59,7 @@ def retrieve(key, isFunction = False):
         IndexError : Unknown key for VARIABLE or FUNCTIONS.      
 
     Returns:
-        Complex | Matrix : Computed stored variable or \
+        (Complex|Matrix) : Computed stored variable or \
         function.
     """
     if isFunction:

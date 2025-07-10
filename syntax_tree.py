@@ -4,12 +4,47 @@ from config import retrieve
 
 from maths.Complex import Complex
 from maths.Matrix import Matrix
-
+from Parser import tokenize, parse
 precedence = {
     '+': 1, '-': 1,
     '*': 2, '/': 2, '%': 2,
     '^': 3, '**': 3
 }
+
+def pseudo_execute(execute_type, tokens):
+    """A pseudo execution to use inside function calls. To handle cases such as 
+    f(3 + 4), f(4i), or even f(g(x)). 
+    
+    Args:
+        execute_type (string): Type of the command. Can be FUNC_DEF, VARIABLE_DISPlAY, \
+        ASSIGNMENT, EQUATION or EXPRESSION.
+        tokens (list|tuple): list of tokens to use. Can also be a single tuple \
+        in some cases. 
+        start_value (str): backup of the original input. Only used for equation \
+        solving.
+    
+    Returns:
+        (Complex|None): Returns the computed value. If the command yields no result\
+        (ie function assignment), returns None.
+    """
+    match(execute_type):
+        case "VARIABLE_DISPLAY":
+            return retrieve(tokens[0][1])
+        case "EXPRESSION":
+            if tokens[1] == '?':
+                return None
+            elif tokens[0] == "FUNC_DEF":
+                return None
+            else:
+                ast = build_ast(tokens)
+                if isinstance(ast, tuple):  # If build_ast returned (Node, index)
+                    ast = ast[0]
+                if isinstance(ast, Node):
+                    result = ast.solve()
+                    return result
+                return ast
+        case _:
+            return None
 
 class FunctionCall:
     """Stores Function calls."""
@@ -31,7 +66,7 @@ class Node:
         if self.left and self.right:
             return f"({self.left} {self.value} {self.right})"
         return str(self.value)
-    
+
     def solve(self, x = None):
         """Solves the node, calling itself recursirvely if
         one of the leafs is another node.
@@ -46,7 +81,7 @@ class Node:
             for `?`, as it is a pseudo-operator used for variable displaying.
             
         Returns:
-            Complex | Matrix : computed result either as a Complex or \
+            (Complex | Matrix) : computed result either as a Complex or \
             a Matrix.
         """
         if isinstance(self.value, FunctionCall):
@@ -96,20 +131,27 @@ def builder(index, tokens, min_precedence=1):
         recursive use.
     """
     token = tokens[index]
-    
+
     if not isinstance(token, tuple) and not isinstance(token, list):
         if tokens[0] == 'VAR':
             return retrieve(tokens[1]).solve()
-        elif tokens[0] == "FUNC_CALL":
+        if tokens[0] == "FUNC_CALL":
             start = tokens[1].find("(")
-            end = tokens[1].find(")")
+            end = tokens[1].rfind(")")
             if start == -1 or end == -1 or start == end:
                 raise IndexError("Value for x of function call couldn't be found.")
             value = tokens[1][start + 1:end]
-            return retrieve(tokens[1], True).solve(float(value))
-        else:
-            return Node(token), index
-        
+            try:
+                f_value = Complex(float(value))
+            except ValueError:
+                new_tokens = tokenize(value)
+                parsed = parse(new_tokens)
+                f_value = pseudo_execute(parsed["type"], parsed["tokens"])
+            result = retrieve(tokens[1], True).solve(f_value)
+            return result
+        return Node(token), index
+
+    left = 0
     if isinstance(token, list):
         left = build_ast(token)
     else:
@@ -133,8 +175,14 @@ def builder(index, tokens, min_precedence=1):
                 if start == -1 or end == -1 or start == end:
                     raise IndexError("Value for x of function call couldn't be found.")
                 value = token_value[start + 1:end]
+                try:
+                    f_value = Complex(float(value))
+                except ValueError:
+                    new_tokens = tokenize(value)
+                    parsed = parse(new_tokens)
+                    f_value = pseudo_execute(parsed["type"], parsed["tokens"])
                 ast = retrieve(token_value[:start], True)
-                left = Node(FunctionCall(ast, Complex(float(value))))
+                left = Node(FunctionCall(ast, f_value))
         else:
             left = Node(token_value)
     index += 1
@@ -166,6 +214,6 @@ def build_ast(tokens):
     Returns:
         Node : built tree, ready to be solved or stored.
     """
-    if isinstance(tokens, tuple):  
+    if isinstance(tokens, tuple):
         return builder(1, tokens)
     return builder(0, tokens)[0]

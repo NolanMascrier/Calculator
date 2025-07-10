@@ -6,8 +6,6 @@ TOKEN_PATTERNS = [
     ("COMPLEX", re.compile(r"-?\d*i")),
     ("DECIMAL", re.compile(r"-?\d+\.\d+")),
     ("INTEGER", re.compile(r"-?\d+")),
-    ("FUNC_DEF", re.compile(r"[a-zA-Z_][a-zA-Z_0-9]*\(x\)")),
-    ("FUNC_CALL", re.compile(r"[a-zA-Z_][a-zA-Z_0-9]*\(.*?\)")), 
     ("VAR", re.compile(r"[a-zA-Z_][a-zA-Z_0-9]*")),
     ("OP", re.compile(r"\+|\-|\*\*|\*|/|%|\^|=|\?")),
     ("PAREN", re.compile(r"[\(\)]")),
@@ -28,9 +26,11 @@ def parse(tokens):
         tokens = tokens[0]
     if any(t[0] == "FUNC_DEF" for t in tokens):
         return {"type": "FUNC_DEF", "tokens": tokens}
-    if (tokens.count(("OP", "=")) == 1 and tokens[0][0] == "VAR" and tokens[1] == ("OP", "=")) and tokens[2] == ("OP", "?"):
+    if (tokens.count(("OP", "=")) == 1 and tokens[0][0] == "VAR"\
+                and tokens[1] == ("OP", "=")) and tokens[2] == ("OP", "?"):
         return {"type": "VARIABLE_DISPLAY", "tokens": tokens}
-    if (tokens.count(("OP", "=")) == 1 and tokens[0][0] == "VAR" and tokens[1] == ("OP", "=")):
+    if (tokens.count(("OP", "=")) == 1 and tokens[0][0] == "VAR"\
+                and tokens[1] == ("OP", "=")):
         return {"type": "ASSIGNMENT", "tokens": tokens}
     if tokens.count(("OP", "=")) == 1:
         left, right = [], []
@@ -43,26 +43,48 @@ def parse(tokens):
         return {"type": "EQUATION", "tokens": tokens}
     return {"type": "EXPRESSION", "tokens": tokens}
 
-def tokenize(input):
+def tokenize(input_value):
     """Takes the user input, parses it and creates a
     token list.
     
     Args:
-        input (str): User input.
+        input_value (str): User input.
         
     Returns:
         list: A list of usable tokens."""
     tokens = []
     index = 0
-    while index < len(input):
+    while index < len(input_value):
         match = None
+        if re.match(r"[a-zA-Z_][a-zA-Z_0-9]*\(", input_value[index:]):
+            name_match = re.match(r"[a-zA-Z_][a-zA-Z_0-9]*", input_value[index:])
+            name = name_match.group(0)
+            i = index + len(name)
+            if input_value[i] != "(":
+                raise ValueError(f"Expected '(' after function name at index {i}")
+            i += 1
+            depth = 1
+            while i < len(input_value) and depth > 0:
+                if input_value[i] == "(":
+                    depth += 1
+                elif input_value[i] == ")":
+                    depth -= 1
+                i += 1
+            if depth != 0:
+                raise ValueError(f"Unbalanced parentheses in function call starting at {index}")
+            full = input_value[index:i]
+            inner = full[len(name)+1:-1]
+            token_type = "FUNC_DEF" if inner == "x" else "FUNC_CALL"
+            tokens.append((token_type, full))
+            index = i
+            continue
         for token_type, pattern in TOKEN_PATTERNS:
-            match = pattern.match(input, index)
+            match = pattern.match(input_value, index)
             if match:
                 value = match.group(0)
                 if token_type == "OP" and value == "-":
                     if not tokens or tokens[-1][0] in {"OP", "PAREN"}:
-                        next_match = re.match(r"\d+(\.\d+)?", input[index + 1:])
+                        next_match = re.match(r"\d+(\.\d+)?", input_value[index + 1:])
                         if next_match:
                             value += next_match.group(0)
                             token_type = "DECIMAL" if "." in value else "INTEGER"
@@ -76,7 +98,7 @@ def tokenize(input):
                 index += len(value)
                 break
         if not match:
-            raise ValueError(f"Unexpected character at index {index}: {input[index]}")
+            raise ValueError(f"Unexpected character at index {index}: {input_value[index]}")
     return validate(group_parentheses(handle_implicit_multiplication((fill_missing(tokens)))))
 
 def group_parentheses(tokens):
@@ -161,12 +183,12 @@ def validate(tokens):
     Returns:
         list: unchange list.
     """
-    for i in range(len(tokens)):
-        if isinstance(tokens[i], list):
-            validate(tokens[i])
+    for i, tok in enumerate(tokens):
+        if isinstance(tok, list):
+            validate(tok)
         elif i + 1 < len(tokens):
-            if tokens[i][0] != 'OP' and tokens[i + 1][0] != 'OP':
+            if tok[0] != 'OP' and tokens[i + 1][0] != 'OP':
                 raise SyntaxError("Two values, no operators !")
-            if tokens[i][0] == 'OP' and tokens[i + 1][0] == 'OP':
-                raise SyntaxError("Two operators, no values !") 
+            if tok[0] == 'OP' and tokens[i + 1][0] == 'OP':
+                raise SyntaxError("Two operators, no values !")
     return tokens

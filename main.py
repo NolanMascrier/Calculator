@@ -11,7 +11,9 @@ if __name__ == "__main__":
             try:
                 tokens = tokenize(val)
                 parsed = parse(tokens)
-                execute(parsed["type"], parsed["tokens"], val)
+                result = execute(parsed["type"], parsed["tokens"], val)
+                if result is not None:
+                    print(result)
             except SyntaxError as e:
                 print(f"Error - Invalid syntax : {e}")
             except ValueError as e:
