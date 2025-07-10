@@ -68,7 +68,7 @@ def execute(execute_type, tokens, start_value):
     match(execute_type):
         case "FUNC_DEF":
             tokens, name = token_strip(tokens)
-            ast = build_ast(tokens)
+            ast = build_ast(tokens).reduce()
             store(ast, name, True)
             return None
         case "VARIABLE_DISPLAY":

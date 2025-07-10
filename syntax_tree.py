@@ -11,6 +11,26 @@ precedence = {
     '^': 3, '**': 3
 }
 
+#helper functions for reducing
+def _is_var(node, name):
+    return isinstance(node, Node) and node.left is None\
+        and node.right is None and node.value == name
+
+def _is_mul(node, var_name):
+    return (
+        isinstance(node, Node)
+        and node.value == '*'
+        and ((_is_var(node.left, var_name) and isinstance(node.right.value, Complex)) or
+             (_is_var(node.right, var_name) and isinstance(node.left.value, Complex)))
+    )
+
+def _extract_coef(node, var_name):
+    if _is_var(node.left, var_name) and isinstance(node.right.value, Complex):
+        return node.right.value.real
+    elif _is_var(node.right, var_name) and isinstance(node.left.value, Complex):
+        return node.left.value.real
+    return 1
+
 def pseudo_execute(execute_type, tokens):
     """A pseudo execution to use inside function calls. To handle cases such as 
     f(3 + 4), f(4i), or even f(g(x)). 
@@ -114,6 +134,67 @@ class Node:
                 return left_value - right_value
             case _:
                 raise AttributeError(f"Unknown operator {self.value} !")
+
+    def reduce(self):
+        """Reduces the tree to a simplest form.
+        ie, x + 2x becomes 3x, 2 + x - 1 becomes x + 1, etc"""
+        if isinstance(self.value, FunctionCall):
+            return Node(FunctionCall(self.value.ast.reduce(), self.value.value))
+        if self.left is None and self.right is None:
+            return self
+        if self.value in ('+', '-'):
+            left = self.left.reduce()
+            right = self.right.reduce()
+            if self.value == '+' and isinstance(left.value, Complex)\
+                    and not isinstance(right.value, Complex):
+                left, right = right, left
+            if left.value == '+' and isinstance(left.right.value, Complex)\
+                    and isinstance(right.value, Complex):
+                new_const = left.right.value + right.value if self.value == '+'\
+                    else left.right.value - right.value
+                return Node('+', left.left, Node(new_const)).reduce()
+            if right.value == '+' and isinstance(right.right.value, Complex)\
+                    and isinstance(left.value, Complex):
+                new_const = left.value + right.right.value if self.value == '+'\
+                    else left.value - right.right.value
+                return Node('+', right.left, Node(new_const)).reduce()
+            if left.value == '+' and isinstance(left.right.value, Complex)\
+                    and isinstance(right.value, Complex) and self.value == '-':
+                new_const = left.right.value - right.value
+                return Node('+', left.left, Node(new_const)).reduce()
+            if isinstance(left.value, Complex) and isinstance(right.value, Complex):
+                return Node(Node(self.value, left, right).solve())
+            if self.value == '+':
+                if _is_var(left, 'x') and _is_mul(right, 'x'):
+                    coef = _extract_coef(right, 'x')
+                    return Node('*', Node(Complex(coef + 1)), Node('x')).reduce()
+                elif _is_mul(left, 'x') and _is_var(right, 'x'):
+                    coef = _extract_coef(left, 'x')
+                    return Node('*', Node(Complex(coef + 1)), Node('x')).reduce()
+                elif _is_mul(left, 'x') and _is_mul(right, 'x'):
+                    coef = _extract_coef(left, 'x') + _extract_coef(right, 'x')
+                    return Node('*', Node(Complex(coef)), Node('x')).reduce()
+            return Node(self.value, left, right)
+        left = self.left.reduce()
+        right = self.right.reduce()
+        if isinstance(left.value, Complex) and isinstance(right.value, Complex):
+            return Node(Node(self.value, left, right).solve())
+        if self.value == '*' and isinstance(right.value, Complex):
+            if right.value == Complex(1):
+                return left
+            elif right.value == Complex(0):
+                return Node(Complex(0))
+        if self.value == '*' and isinstance(left.value, Complex):
+            if left.value == Complex(1):
+                return right
+            elif left.value == Complex(0):
+                return Node(Complex(0))
+        if self.value == '+' and isinstance(left.value, Complex) and left.value == Complex(0):
+            return right
+        if self.value == '+' and isinstance(right.value, Complex) and right.value == Complex(0):
+            return left
+
+        return Node(self.value, left, right)
 
 def builder(index, tokens, min_precedence=1):
     """Recursively parses the token list to create the \
