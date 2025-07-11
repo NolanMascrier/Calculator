@@ -1,10 +1,12 @@
 """File containing containing the Function/Variable storages and the methods \
     to access them."""
 
+from equations.ft_maths import IS_MATHS, IS_VARIABLE
+
 VARIABLES = []
 FUNCTIONS = []
 
-def store(value, name, isFunction = False):
+def store(value, name, is_function = False):
     """Stores a function or a variable.
     
     Args:
@@ -17,11 +19,12 @@ def store(value, name, isFunction = False):
     Raises:
         SyntaxError : The variable/function has a forbidden name (x)
     """
-    global VARIABLES
     flag = False
     if name.lower() == 'x':
         raise SyntaxError(f"Cannot use {name} as a variable name !")
-    if isFunction:
+    if is_function:
+        if name in IS_MATHS:
+            raise SyntaxError(f"Cannot overwrite default function {name} !")
         for data in FUNCTIONS:
             if data[0] == name:
                 flag = True
@@ -29,6 +32,8 @@ def store(value, name, isFunction = False):
         if flag is False:
             FUNCTIONS.append([name, value])
     else:
+        if name in IS_VARIABLE:
+            raise SyntaxError(f"Cannot overwrite default variable {name} !")
         for data in VARIABLES:
             if data[0] == name:
                 flag = True
@@ -46,7 +51,7 @@ def display():
     for data in FUNCTIONS:
         print(f"{str(data[0])}(x) = {str(data[1])}")
 
-def retrieve(key, isFunction = False):
+def retrieve(key, is_function = False):
     """Retrieve and solve a function or a variable.
     
     Args:
@@ -62,7 +67,7 @@ def retrieve(key, isFunction = False):
         (Complex|Matrix) : Computed stored variable or \
         function.
     """
-    if isFunction:
+    if is_function:
         index = key.find("(")
         if index != -1:
             key = key[:index]

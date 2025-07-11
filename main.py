@@ -1,5 +1,6 @@
 """Main loop file."""
-from Parser import tokenize, parse
+
+from ft_parser import tokenize, parse
 from execution import execute
 
 if __name__ == "__main__":

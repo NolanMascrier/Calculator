@@ -1,27 +1,28 @@
+"""Solves an equation."""
+
 import sys
-#Beurk le regex
 import re
-from equations.Polynomial import Polynomial
-from equations.Equation import Equation
+from equations.polynomial import Polynomial
+from equations.equation import Equation
 
 def extract_terms(expression, regex):
-        """Extracts the Polynomials according to the regex"""
-        terms = []
-        for match in regex.finditer(expression):
-            coeff_str, x_part, exponent_str = match.groups()
-            if not coeff_str and not x_part:  
-                continue
-            if coeff_str == '' or coeff_str == '+':
-                coeff = 1.0
-            elif coeff_str == '-':
-                coeff = -1.0
-            else:
-                coeff = float(coeff_str)
-            exponent = int(exponent_str) if exponent_str else (1 if x_part else 0)
-            if (exponent > 2):
-                return None
-            terms.append(Polynomial(coeff, exponent))
-        return terms
+    """Extracts the Polynomials according to the regex"""
+    terms = []
+    for match in regex.finditer(expression):
+        coeff_str, x_part, exponent_str = match.groups()
+        if not coeff_str and not x_part:
+            continue
+        if coeff_str in ['', '+']:
+            coeff = 1.0
+        elif coeff_str == '-':
+            coeff = -1.0
+        else:
+            coeff = float(coeff_str)
+        exponent = int(exponent_str) if exponent_str else (1 if x_part else 0)
+        if exponent > 2:
+            return None
+        terms.append(Polynomial(coeff, exponent))
+    return terms
 
 def parse_equation(equation):
     """Parses the equation and creates the polynomials using regex"""
@@ -48,6 +49,6 @@ if __name__ == "__main__":
         elif equals > 1:
             print("An equation needs a single equality !")
         else:
-            parse(eq)
+            parse_equation(eq)
     except IndexError:
         print("You must put an equation for the program to work !")

@@ -12,7 +12,7 @@ class Polynomial():
         self._coeff = coeff
         self._exponant = exponant
         self._variable = variable
-    
+
     def __str__(self) -> str:
         """Returns the polynomial as a
         string.
@@ -31,7 +31,7 @@ class Polynomial():
         if self._exponant == 1:
             return val
         return val + "^" + str(self._exponant)
-    
+
     def degree(self) -> int:
         """Returns the degree of the polynomial
 
@@ -39,7 +39,7 @@ class Polynomial():
             int : degree of the polynomial
         """
         return self._exponant
-    
+
     def calculate(self, x) -> float:
         """Returns the result for a given x
 
@@ -49,9 +49,10 @@ class Polynomial():
         Returns:
             float : computed result"""
         return self._coeff * (x ** self._exponant)
-    
+
     @property
     def coeff(self):
+        """Returns the coefficient of the polynomial."""
         return self._coeff
 
     @coeff.setter
@@ -60,6 +61,7 @@ class Polynomial():
 
     @property
     def exponant(self):
+        """Returns the exponant of the polynomial."""
         return self._exponant
 
     @exponant.setter
@@ -68,6 +70,8 @@ class Polynomial():
 
     @property
     def variable(self):
+        """Returns the variable's display name. Should
+        be x in most cases."""
         return self._variable
 
     @variable.setter

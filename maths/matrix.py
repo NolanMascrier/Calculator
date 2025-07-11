@@ -1,6 +1,6 @@
 """Class for storing matrixes."""
 
-from maths.Complex import Complex
+from maths.complex import Complex
 
 class Matrix():
     """Creates a Matrix.

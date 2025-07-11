@@ -1,27 +1,47 @@
 """*You can't use math or cmath lib* whyyyyyyyyy"""
+
+from maths.complex import Complex
+
 PI = 3.141592653589793
+E = 2.718281828459045
 
 def ft_fact(n):
     """Returns the factorial of n.
     
     Args:
         n (int): n! value"""
-    sum = 1
+    if isinstance(n, Complex):
+        if n.imag != 0:
+            raise ValueError("Complex numbers don't have factorials !")
+        n = n.real
+    if int(n) != n:
+        raise ValueError("Decimal numbers don't have factorials !")
+    if n < 0:
+        raise ValueError("Negative numbers don't have factorials !")
+    if n in [0, 1]:
+        return 1
+    sums = 1
     for i in range(2, n + 1):
-        sum *= i
-    return sum
+        sums *= i
+    return sums
 
 def ft_sin(x):
     """Calculates sin(x)
     
     Args:
-        x (int)"""
+        x (float): Input value in RADIANS"""
+    if isinstance(x, Complex):
+        if x.imag != 0:
+            raise ValueError("Cannot use sin on complex number !")
+        x = x.real
+    if x == PI:
+        return 0
+    sin_x = 0
     x = x % (2 * PI)
     if x > PI:
         x -= 2 * PI
-    sin_x = 0
-    for n in range(10):
-        term = (-1 ** n) * (x ** (2 * n + 1)) / ft_fact(2 * n + 1)
+    for n in range(15):
+        term = ((-1) ** n) * (x ** (2 * n + 1)) / ft_fact(2 * n + 1)
         sin_x += term
     return sin_x
 
@@ -29,77 +49,49 @@ def ft_cos(x):
     """Calculates cos(x)
     
     Args:
-        x (int)"""
-    x = x % (2 * PI)
-    if x > PI:
-        x -= 2 * PI
-    cos_x = 0
-    for n in range(10):
-        term = (-1 ** n) * (x ** (2 * n)) / ft_fact(2 * n)
-        cos_x += term
+        x (float): Input value in RADIANS"""
+    if isinstance(x, Complex):
+        if x.imag != 0:
+            raise ValueError("Cannot use sin on complex number !")
+        x = x.real
+    if x == PI:
+        return -1
+    cos_x = ft_sin((PI / 2) - x)
     return cos_x
+
+def ft_tan(x):
+    """Calculates tan(x)
+    
+    Args:
+        x (float): Input value in RADIANS"""
+    if isinstance(x, Complex):
+        if x.imag != 0:
+            raise ValueError("Cannot use sin on complex number !")
+        x = x.real
+    if x == PI:
+        return 0
+    return ft_sin(x)/ft_cos(x)
 
 def ft_sqrt(value):
     """Does a square root."""
+    if isinstance(value, Complex):
+        if value.imag != 0:
+            raise ValueError("Cannot use sqrt on complex number !")
+        value = value.real
     if value >= 0:
         return value ** 0.5
     return Complex(0, (-value) ** 0.5)
 
-class Complex():
-    """Creates a complex number."""
-    def __init__(self, real, im):
-        self._real = real
-        self._imag = im
+IS_MATHS = {
+    "factorial": ft_fact,
+    "sin": ft_sin,
+    "cos": ft_cos,
+    "tan": ft_tan,
+    "sqrt": ft_sqrt
+}
 
-    def __str__(self):
-        return str(self.real) + ("+" if self.imag >= 0 else "-") + str(self.imag) + "i"
-
-    def __add__(self, other):
-        if isinstance(other, Complex):
-            return Complex(self.real + other.real, self.imag + other.imag)
-        elif isinstance(other, (int, float)):
-            return Complex(self.real + other, self.imag)
-        return None
-    
-    def __radd__(self, other):
-        return self.__add__(other)
-
-    def __sub__(self, other):
-        if isinstance(other, Complex):
-            return Complex(self.real - other.real, self.imag - other.imag)
-        elif isinstance(other, (int, float)):
-            return Complex(self.real - other, self.imag)
-        return None
-    
-    def __rsub__(self, other):
-        return Complex(other - self.real, -self.imag)
-
-    def __truediv__(self, other):
-        if isinstance(other, Complex):
-            a, b = self.real, self.imag
-            c, d = other.real, other.imag
-            denominator = c * c + d * d
-            if denominator == 0:
-                raise ZeroDivisionError("division by zero")
-            return Complex((a * c + b * d) / denominator, (b * c - a * d) / denominator)
-        elif isinstance(other, (int, float)):
-            if other == 0:
-                raise ZeroDivisionError("division by zero")
-            return Complex(self.real / other, self.imag / other)
-        return None
-
-    @property
-    def real(self):
-        return self._real
-
-    @real.setter
-    def real(self, value):
-        self._real = value
-
-    @property
-    def imag(self):
-        return self._imag
-
-    @imag.setter
-    def imag(self, value):
-        self._imag = value
+IS_VARIABLE = {
+    "pi": PI,
+    "π": PI,
+    "e": E
+}

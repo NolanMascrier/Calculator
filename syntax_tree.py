@@ -1,10 +1,12 @@
 """A class to store the Abstract Syntax Tree"""
 
-from config import retrieve
+from storage import retrieve
 
-from maths.Complex import Complex
-from maths.Matrix import Matrix
-from Parser import tokenize, parse
+from ft_parser import tokenize, parse
+from maths.complex import Complex
+from maths.matrix import Matrix
+from equations.ft_maths import IS_MATHS, IS_VARIABLE
+
 precedence = {
     '+': 1, '-': 1,
     '*': 2, '/': 2, '%': 2,
@@ -27,7 +29,7 @@ def _is_mul(node, var_name):
 def _extract_coef(node, var_name):
     if _is_var(node.left, var_name) and isinstance(node.right.value, Complex):
         return node.right.value.real
-    elif _is_var(node.right, var_name) and isinstance(node.left.value, Complex):
+    if _is_var(node.right, var_name) and isinstance(node.left.value, Complex):
         return node.left.value.real
     return 1
 
@@ -49,6 +51,8 @@ def pseudo_execute(execute_type, tokens):
     """
     match(execute_type):
         case "VARIABLE_DISPLAY":
+            if tokens[0][1] in IS_VARIABLE:
+                return IS_VARIABLE[tokens[0][1]]
             return retrieve(tokens[0][1])
         case "EXPRESSION":
             if tokens[1] == '?':
@@ -215,7 +219,10 @@ def builder(index, tokens, min_precedence=1):
 
     if not isinstance(token, tuple) and not isinstance(token, list):
         if tokens[0] == 'VAR':
-            return retrieve(tokens[1]).solve()
+            if tokens[1] in IS_VARIABLE:
+                return IS_VARIABLE[tokens[1]]
+            else:
+                return retrieve(tokens[1]).solve()
         if tokens[0] == "FUNC_CALL":
             start = tokens[1].find("(")
             end = tokens[1].rfind(")")
@@ -228,8 +235,13 @@ def builder(index, tokens, min_precedence=1):
                 new_tokens = tokenize(value)
                 parsed = parse(new_tokens)
                 f_value = pseudo_execute(parsed["type"], parsed["tokens"])
-            result = retrieve(tokens[1], True).solve(f_value)
-            return result
+            func_name = tokens[1][:start]
+            if func_name in IS_MATHS:
+                final_value = IS_MATHS[func_name](f_value)
+                return final_value
+            else:
+                result = retrieve(func_name, True).solve(f_value)
+                return result
         return Node(token), index
 
     left = 0
@@ -249,7 +261,10 @@ def builder(index, tokens, min_precedence=1):
             if token_value == 'x':
                 left = Node('x')
             elif token_type == "VAR":
-                left = Node(retrieve(token_value).solve())
+                if token_value in IS_VARIABLE:
+                    left = Node(IS_VARIABLE[token_value])
+                else:
+                    left = Node(retrieve(token_value).solve())
             elif token_type == "FUNC_CALL":
                 start = token_value.find("(")
                 end = token_value.find(")")
@@ -262,8 +277,13 @@ def builder(index, tokens, min_precedence=1):
                     new_tokens = tokenize(value)
                     parsed = parse(new_tokens)
                     f_value = pseudo_execute(parsed["type"], parsed["tokens"])
-                ast = retrieve(token_value[:start], True)
-                left = Node(FunctionCall(ast, f_value))
+                func_name = token_value[:start]
+                if func_name in IS_MATHS:
+                    final_value = IS_MATHS[func_name](f_value)
+                    left = Node(final_value)
+                else:
+                    ast = retrieve(func_name, True)
+                    left = Node(FunctionCall(ast, f_value))
         else:
             left = Node(token_value)
     index += 1

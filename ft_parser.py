@@ -1,3 +1,8 @@
+"""Parsing functions. Uses regex to build the token list,
+then adds missing symbols (like a * for 2x -> 2 * x).
+Then it validates the input, and raises error should it not
+be valid."""
+
 import re
 
 TOKEN_PATTERNS = [
@@ -160,8 +165,9 @@ def fill_missing(tokens):
     i = 0
     while i < len(tokens):
         if tokens[i][0] != "WHITESPACE":
-            if tokens[i][0] not in ["OP", "FUNC_CALL", "FUNC_DEF", "VAR", "PAREN", "MATRIX"] \
-                    and tokens[i][1][0] == '-':
+            if tokens[i][0] not in ["OP", "FUNC_CALL", "FUNC_DEF", "VAR", "PAREN", "MATRIX"]\
+                    and tokens[i][1][0] == '-'\
+                    and tokens[i - 1] != ("OP", "*"):
                 new_tokens.append(('OP', '-'))
                 new_tokens.append((tokens[i][0], tokens[i][1][1:]))
             else:

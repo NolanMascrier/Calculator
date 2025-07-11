@@ -2,7 +2,7 @@
 
 from fractions import Fraction
 from equations.ft_maths import ft_sqrt
-from equations.Polynomial import Polynomial
+from equations.polynomial import Polynomial
 
 MAX_DEGREE = 2
 
@@ -23,7 +23,7 @@ def format_fraction(value, max_denominator = 100):
         return frac.numerator
     return (frac) if frac.denominator <= max_denominator else round(value, 6)
 
-def format_complex(complex):
+def format_complex(cmplex):
     """Simple function to format the complex number.
 
     Args:
@@ -32,8 +32,8 @@ def format_complex(complex):
     Returns:
         str: formatted complex number.
     """
-    re = complex.real
-    im = complex.imag
+    re = cmplex.real
+    im = cmplex.imag
     fre = format_fraction(re)
     fim = format_fraction(abs(im))
     if im < 0:
@@ -42,8 +42,8 @@ def format_complex(complex):
         return str(fre) + " + " + str(fim) + "i"
     else:
         return str(fre)
-    
-def squish(list):
+
+def squish(values):
     """Squishes a list of polynomials.
     
     Args:
@@ -54,7 +54,7 @@ def squish(list):
     """
     seen_exponents = []
     result = []
-    for obj in list:
+    for obj in values:
         if obj.exponant in seen_exponents:
             for res_obj in result:
                 if res_obj.exponant == obj.exponant:
@@ -66,20 +66,27 @@ def squish(list):
     return result
 
 class Equation():
+    """Creates an equation to solve.
+    
+    Args:
+        left (list, optional): Left part of the equation.\
+        Defaults to `[0]`
+        right (list, optional): Right part of the equation.\
+        Defaults to `[0]`
+        """
     def __init__(self, left = None, right = None):
         if left is None:
-            self._left = []
+            self._left = [Polynomial(0)]
         else:
             self._left = left
         if right is None:
-            self._right = []
+            self._right = [Polynomial(0)]
         else:
             self._right = right
         self._deg_left = 0
         self._deg_right = 0
         self.__complete_missing()
         self._deg = max(self._deg_left, self._deg_right)
-        #self.__squash()
 
     def __sort_sides(self):
         """Sorts left and right sides according to
@@ -175,8 +182,9 @@ class Equation():
         Returns:
             str: Displayed equation.
         """
-        return (self.__left_side() + " = " + self.__right_side()).replace(".0 ", ' ').replace(".0x", 'x').replace(".0\n", '\n')
-    
+        return (self.__left_side() + " = " + self.__right_side()).replace(".0 ", ' ')\
+            .replace(".0x", 'x').replace(".0\n", '\n')
+
     def degree(self) -> int:
         """Returns the polynomial degree of the equation as a string.
         
@@ -207,7 +215,7 @@ class Equation():
         to_add = " (" + sign + " " + str(Polynomial(coeff, expo)) + ")"
         stepped = value[:index + 3] + to_add + value[index + 3:]
         return stepped
-    
+
     def __simplify_right(self, coeff, expo, sign):
         """Inserts the simplification substring on the right
         side of the equation.
@@ -243,7 +251,8 @@ class Equation():
         """
         if coeff == 0:
             return
-        value = self.__simplify_left(coeff, expo, sign) + " = " + self.__simplify_right(coeff, expo, sign)
+        value = self.__simplify_left(coeff, expo, sign) + " = "\
+                    + self.__simplify_right(coeff, expo, sign)
         value = value.replace(".0 ", ' ').replace(".0x", 'x').replace(".0\n", '\n')
         print(f"Medium step       : {value}")
 

@@ -2,13 +2,13 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from syntax_tree import build_ast
-from config import store, retrieve, display
+from syntax_tree import build_ast, Node
+from storage import store, retrieve, display
 
-from maths.Complex import Complex
-from equations.Equation_solver import parse_equation
-from syntax_tree import Node
+from maths.complex import Complex
+from equations.equation_solver import parse_equation
 
+from equations.ft_maths import IS_VARIABLE, IS_MATHS
 
 def token_strip(tokens):
     """Strips the tokens of the name and the = operator \
