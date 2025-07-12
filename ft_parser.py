@@ -10,6 +10,7 @@ TOKEN_PATTERNS = [
     ("MATRIX", re.compile(r"\[\[.*?\]\]")),
     ("COMPLEX", re.compile(r"-?\d*i")),
     ("DECIMAL", re.compile(r"-?\d+\.\d+")),
+    ("FACT", re.compile(r"-?\d+!")),
     ("INTEGER", re.compile(r"-?\d+")),
     ("VAR", re.compile(r"[a-zA-Z_][a-zA-Z_0-9]*")),
     ("OP", re.compile(r"\+|\-|\*\*|\*|/|%|\^|=|\?")),
@@ -126,6 +127,8 @@ def group_parentheses(tokens):
             stack[-1].append(token)
     if len(stack) != 1:
         raise ValueError("Mismatched parentheses in expression")
+    if len(stack[0]) == 1:
+        return stack[0][0]
     return stack[0]
 
 def handle_implicit_multiplication(tokens):

@@ -23,6 +23,8 @@ if __name__ == "__main__":
                 print(f"Error - Unsupporte operation : {e}")
             except IndexError as e:
                 print(f"Error - Unknown variable or function {e}")
+            except ZeroDivisionError:
+                print("Error - Cannot divide by 0 !")
         except EOFError:
             print("\nExiting ...")
             break

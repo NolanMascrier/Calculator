@@ -21,7 +21,7 @@ def ft_fact(n):
     if n in [0, 1]:
         return 1
     sums = 1
-    for i in range(2, n + 1):
+    for i in range(2, int(n) + 1):
         sums *= i
     return sums
 

@@ -5,7 +5,7 @@ from storage import retrieve
 from ft_parser import tokenize, parse
 from maths.complex import Complex
 from maths.matrix import Matrix
-from equations.ft_maths import IS_MATHS, IS_VARIABLE
+from equations.ft_maths import IS_MATHS, IS_VARIABLE, ft_fact
 
 precedence = {
     '+': 1, '-': 1,
@@ -172,10 +172,10 @@ class Node:
                 if _is_var(left, 'x') and _is_mul(right, 'x'):
                     coef = _extract_coef(right, 'x')
                     return Node('*', Node(Complex(coef + 1)), Node('x')).reduce()
-                elif _is_mul(left, 'x') and _is_var(right, 'x'):
+                if _is_mul(left, 'x') and _is_var(right, 'x'):
                     coef = _extract_coef(left, 'x')
                     return Node('*', Node(Complex(coef + 1)), Node('x')).reduce()
-                elif _is_mul(left, 'x') and _is_mul(right, 'x'):
+                if _is_mul(left, 'x') and _is_mul(right, 'x'):
                     coef = _extract_coef(left, 'x') + _extract_coef(right, 'x')
                     return Node('*', Node(Complex(coef)), Node('x')).reduce()
             return Node(self.value, left, right)
@@ -191,7 +191,7 @@ class Node:
         if self.value == '*' and isinstance(left.value, Complex):
             if left.value == Complex(1):
                 return right
-            elif left.value == Complex(0):
+            if left.value == Complex(0):
                 return Node(Complex(0))
         if self.value == '+' and isinstance(left.value, Complex) and left.value == Complex(0):
             return right
@@ -218,11 +218,14 @@ def builder(index, tokens, min_precedence=1):
     token = tokens[index]
 
     if not isinstance(token, tuple) and not isinstance(token, list):
+        if tokens[0] == "MATRIX":
+            return Matrix(tokens[1], True)
+        if tokens[0] == "FACT":
+            return Complex(ft_fact(float(tokens[1][:len(tokens[1])-1])))
         if tokens[0] == 'VAR':
             if tokens[1] in IS_VARIABLE:
                 return IS_VARIABLE[tokens[1]]
-            else:
-                return retrieve(tokens[1]).solve()
+            return retrieve(tokens[1]).solve()
         if tokens[0] == "FUNC_CALL":
             start = tokens[1].find("(")
             end = tokens[1].rfind(")")
@@ -249,7 +252,9 @@ def builder(index, tokens, min_precedence=1):
         left = build_ast(token)
     else:
         token_type, token_value = token
-        if token_type == "INTEGER":
+        if token_type == "FACT":
+            left = Node(Complex(ft_fact(float(token_value[:len(token_value)-1]))))
+        elif token_type == "INTEGER":
             left = Node(Complex(int(token_value)))
         elif token_type == "DECIMAL":
             left = Node(Complex(float(token_value)))

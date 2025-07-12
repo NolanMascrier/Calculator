@@ -75,8 +75,7 @@ def execute(execute_type, tokens, start_value):
             value = retrieve(tokens[0][1])
             if value is None:
                 return "No such variable."
-            else:
-                return value
+            return value
         case "ASSIGNMENT":
             tokens, name = token_strip(tokens)
             ast = build_ast(tokens)
@@ -89,7 +88,7 @@ def execute(execute_type, tokens, start_value):
             if tokens[1] == '?':
                 display()
                 return None
-            elif tokens[0] == "FUNC_DEF":
+            if tokens[0] == "FUNC_DEF":
                 index = tokens[1].find("(")
                 if index != -1:
                     name = tokens[1][:index]
@@ -99,13 +98,12 @@ def execute(execute_type, tokens, start_value):
                 print(f"displaying curve for function {name} ...")
                 display_curve(data, name)
                 return None
-            else:
-                ast = build_ast(tokens)
-                if isinstance(ast, tuple):  # If build_ast returned (Node, index)
-                    ast = ast[0]
-                if isinstance(ast, Node):
-                    result = ast.solve()
-                    return result
-                return ast
+            ast = build_ast(tokens)
+            if isinstance(ast, tuple):  # If build_ast returned (Node, index)
+                ast = ast[0]
+            if isinstance(ast, Node):
+                result = ast.solve()
+                return result
+            return ast
         case _:
             return f"Unknown value : {execute_type}. Tokens :\n{tokens}"

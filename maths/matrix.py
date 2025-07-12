@@ -8,14 +8,14 @@ class Matrix():
     Args:
         values (str | list[list]): List of values to insert. Can be a token \
         or an actual matrix represented as a list of list.
-        readFromTokens (bool, optionnal): Wether or not `values` if a token. Defaults to \
+        read_from_tokens (bool, optionnal): Wether or not `values` if a token. Defaults to \
         `True`.
 
     Raises:
         AttributeError : The matrix's lines lengths are mistmatched. \
     """
-    def __init__(self, values, readFromTokens = True):
-        if readFromTokens:
+    def __init__(self, values, read_from_tokens = True):
+        if read_from_tokens:
             self._values = [[]]
             self.read(values)
         else:
@@ -30,7 +30,7 @@ class Matrix():
         result = ""
         for data in self._values:
             result += "["
-            for i in range(len(data)):
+            for i, _ in enumerate(data):
                 if i + 1 >= len(data):
                     result += f"{data[i]}"
                 else:
@@ -52,7 +52,7 @@ class Matrix():
             for row in rows
         ]
 
-    def __identity_matrix(self, n):
+    def identity_matrix(self, n):
         """Creates and returns an identity matrix of size n as a double list.
         An identity matrix of a matrix made of 0 and 1, only on the diagonal, eg : \n
         1 0 0 0 \n 
@@ -66,9 +66,9 @@ class Matrix():
                 if i == j:
                     matrix[i][j] = 1
         return matrix
-    
+
     def __add__(self, other):
-        """\+ operator overload.
+        """+ operator overload.
         
         Raises:
             AttributeError : An attempt to add a matrix with anything else was made.
@@ -78,10 +78,11 @@ class Matrix():
             raise AttributeError("You can only add a Matrix to another one !")
         if self._lines != other._lines or self._columns != other._columns:
             raise AttributeError("Two matrices needs the same amount of values to be added !")
-        return Matrix([[self._values[i][j] + other.values[i][j] for j in range(len(self._values[0]))] for i in range(len(self._values))], False)
-    
+        return Matrix([[self._values[i][j] + other.values[i][j]\
+            for j in range(len(self._values[0]))] for i in range(len(self._values))], False)
+
     def __sub__(self, other):
-        """\- operator overload.
+        """- operator overload.
         
         Raises:
             AttributeError : An attempt to substract a matrix with anything else was made.
@@ -91,8 +92,9 @@ class Matrix():
             raise AttributeError("You can only substract a Matrix to another one !")
         if self._lines != other._lines or self._columns != other._columns:
             raise AttributeError("Two matrices needs the same amount of values to be substracted !")
-        return Matrix([[self._values[i][j] - other.values[i][j] for j in range(len(self._values[0]))] for i in range(len(self._values))], False)
-    
+        return Matrix([[self._values[i][j] - other.values[i][j]\
+            for j in range(len(self._values[0]))] for i in range(len(self._values))], False)
+
     def __generate_empty_matrix(self, cols, lines):
         """Generates a matrix of size cols*line filled with 0s.
         
@@ -116,13 +118,20 @@ class Matrix():
         if isinstance(other, (int, float, Complex)):
             return Matrix([[val * other for val in row] for row in self._values], False)
         if not isinstance(other, Matrix):
-            raise AttributeError("You can only (simple) multiply a matrix with a scalar or another matrix !")
+            raise AttributeError\
+                ("You can only (simple) multiply a matrix with a scalar or another matrix !")
         if self._columns != other._lines:
-            raise AttributeError("Two matrices needs the same amount of values to be (simple) multiplied !")
-        return Matrix([[self._values[i][j] * other.values[i][j] for j in range(len(self._values[0]))] for i in range(len(self._values))], False)
-    
+            raise AttributeError\
+                ("Two matrices needs the same amount of values to be (simple) multiplied !")
+        new_values = self.__generate_empty_matrix(other.columns, self._lines)
+        for line in range(self._lines):
+            for col in range(other.columns):
+                for i in range(self._columns):
+                    new_values[line][col] += self._values[line][i] * other.values[i][col]
+        return Matrix(new_values, False)
+
     def __mod__(self, other):
-        """\% operator overload.
+        """% operator overload.
         
         Raises:
             AttributeError : An attempt to mod a matrix with anything else was made.
@@ -133,9 +142,9 @@ class Matrix():
         if self._lines != other._lines or self._columns != other._columns:
             raise AttributeError("Two matrices needs the same amount of values to be moduled !")
         return Matrix([[val % other for val in row] for row in self._values], False)
-    
+
     def __pow__(self, other):
-        """\^ operator overload.
+        """^ operator overload.
         
         Raises:
             AttributeError : An attempt to raise a matrix with anything else than an int.
@@ -148,25 +157,27 @@ class Matrix():
                 result = result * self
             return result
         raise AttributeError("You can only power a Matrix with a positive integer !")
-    
+
     def __matmul__(self, other):
         """@ operator overload. Multiplication of two matrices.
 
         Raises:
-            AttributeError : An attempt to raise a matrix with anything else than an int.
-            AttributeError : An attempt to raise a non square matrix was made.
+            AttributeError : An attempt to multiply a matrix with a non matrix entity was made.
+            AttributeError : An attempt to multiply two incomptaible matrices was made.
         """
         if not isinstance(other, Matrix):
             raise AttributeError("You can only (true) multiply a matrix with another one !")
         if self._columns != other._lines:
-            raise AttributeError("To multiply two matrices, the first one needs to have as many columns as the second one has lines !")
+            raise AttributeError\
+                ("To multiply two matrices, the first one needs" +\
+                "to have as many columns as the second one has lines !")
         matr = self.__generate_empty_matrix(self._columns, other._lines)
         for row in range(other._lines):
             for column in range(self._columns):
-                for value in range(len(other.values)):
+                for value, _ in enumerate(other.values):
                     matr[row][column] += self._values[row][value] * other.values[value][column]
         return Matrix(matr, False)
-    
+
     def __eq__(self, other):
         """Equality operator overload =="""
         if not isinstance(other, Matrix):
@@ -188,17 +199,19 @@ class Matrix():
         if self == other:
             return False
         return True
-    
+
     @property
     def values(self):
+        """Returns the matrix as a list."""
         return self._values
 
     @values.setter
     def values(self, value):
         self._values = value
-    
+
     @property
     def lines(self):
+        """Returns the number of vectors in the matrix."""
         return self._lines
 
     @lines.setter
@@ -207,6 +220,7 @@ class Matrix():
 
     @property
     def columns(self):
+        """Returns the number of values in a vector."""
         return self._columns
 
     @columns.setter
