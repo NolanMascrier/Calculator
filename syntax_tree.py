@@ -59,6 +59,15 @@ class FunctionCall:
     def __str__(self):
         return f"{self.ast}({self.value})"
 
+class FunctionStore:
+    """Stores a function name and value."""
+    def __init__(self, name, value = 'x'):
+        self.name = name
+        self.value = value
+
+    def __str__(self):
+        return f"{self.name}({self.value})"
+
 class Node:
     """Abstract Syntax Tree class."""
     def __init__(self, value, left=None, right=None):
@@ -112,6 +121,8 @@ class Node:
         """
         if isinstance(self.value, FunctionCall):
             return self.value.ast.solve(self.value.value)
+        if isinstance(self.value, FunctionStore):
+            return retrieve(self.value.name, True).solve(x)
         if self.left is None and self.right is None:
             if self.value == 'x' and x is not None:
                 return x
@@ -229,6 +240,14 @@ def builder(index, tokens, min_precedence=1):
             cmp = Complex(0)
             cmp.read(tokens)
             return cmp
+        if tokens[0] == "FUNC_DEF":
+            start = tokens[1].find("(")
+            end = tokens[1].rfind(")")
+            if start == -1 or end == -1 or start == end:
+                raise IndexError("Value for x of function call couldn't be found.")
+            value = tokens[1][start + 1:end]
+            func_name = tokens[1][:start]
+            return FunctionStore(func_name, value)
         if tokens[0] == 'VAR':
             if tokens[1] in IS_VARIABLE:
                 return IS_VARIABLE[tokens[1]]
@@ -271,6 +290,14 @@ def builder(index, tokens, min_precedence=1):
             left.value.read(token)
         elif token_type == "MATRIX":
             left = Node(Matrix(token_value))
+        elif token_type == "FUNC_DEF":
+            start = token_value.find("(")
+            end = token_value.rfind(")")
+            if start == -1 or end == -1 or start == end:
+                raise IndexError("Value for x of function call couldn't be found.")
+            value = token_value[start + 1:end]
+            func_name = token_value[:start]
+            left = Node(FunctionStore(func_name, value))
         elif token_type in ("VAR", "FUNC_CALL"):
             if token_value == 'x':
                 left = Node('x')
