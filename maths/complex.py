@@ -121,11 +121,16 @@ class Complex():
             ValueError: Unknown token.
         """
         if value[0] == "INTEGER":
-            self._real = int(value[1])
+            self._real = float(value[1])
             self._imag = 0
         elif value[0] == "COMPLEX":
             self._real = 0
-            self._imag = int(value[1][:-1])  # Remove 'i' and convert to int
+            if value[1] == "i":
+                self._imag = 1
+            elif value[1] == "-i":
+                self._imag = -1
+            else:
+                self._imag = float(value[1][:-1])  # Remove 'i' and convert to int
         elif value[0] == "DECIMAL":
             self._real = float(value[1])
             self._imag = 0

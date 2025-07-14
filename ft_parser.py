@@ -8,7 +8,7 @@ import re
 TOKEN_PATTERNS = [
     ("WHITESPACE", re.compile(r"\s")),
     ("MATRIX", re.compile(r"\[\[.*?\]\]")),
-    ("COMPLEX", re.compile(r"-?\d*i")),
+    ("COMPLEX", re.compile(r"-?(?:\d+(?:\.\d+)?|\.\d+)?i(?![\w.])")),
     ("DECIMAL", re.compile(r"-?\d+\.\d+")),
     ("FACT", re.compile(r"-?\d+!")),
     ("INTEGER", re.compile(r"-?\d+")),
@@ -88,6 +88,8 @@ def tokenize(input_value):
             match = pattern.match(input_value, index)
             if match:
                 value = match.group(0)
+                if token_type == "WHITESPACE":
+                    index += len(value)
                 if token_type == "OP" and value == "-":
                     if not tokens or tokens[-1][0] in {"OP", "PAREN"}:
                         next_match = re.match(r"\d+(\.\d+)?", input_value[index + 1:])
@@ -95,11 +97,6 @@ def tokenize(input_value):
                             value += next_match.group(0)
                             token_type = "DECIMAL" if "." in value else "INTEGER"
                             index += len(next_match.group(0))
-                if token_type == "COMPLEX":
-                    if value == 'i':
-                        value = '1i'
-                    elif value == '-i':
-                        value = '-1i'
                 tokens.append((token_type, value))
                 index += len(value)
                 break
@@ -127,7 +124,7 @@ def group_parentheses(tokens):
             stack[-1].append(token)
     if len(stack) != 1:
         raise ValueError("Mismatched parentheses in expression")
-    if len(stack[0]) == 1:
+    if len(stack[0]) == 1 and isinstance(stack[0][0], list):
         return stack[0][0]
     return stack[0]
 
