@@ -68,6 +68,8 @@ class Node:
 
     def __str__(self):
         if self.left and self.right:
+            if self.value == '*' and self.right.value == 'x':
+                return f"({self.left}{self.right})"
             return f"({self.left} {self.value} {self.right})"
         return str(self.value)
 
@@ -80,12 +82,15 @@ class Node:
         return self.value == "x" and self.left is None and self.right is None
 
     def is_zero(self):
+        """Checks if the node is a 0."""
         return self.is_constant() and self.value == 0
 
     def is_one(self):
+        """Checks if the node is 1."""
         return self.is_constant() and self.value == 1
 
     def same_var(self, other):
+        """Checks if the two nodes are two xs."""
         return self.is_var() and other.is_var() and self.value == other.value
 
     def solve(self, x = None):
@@ -115,7 +120,7 @@ class Node:
             return self.value
         left_value = self.left.solve(x)
         right_value = self.right.solve(x)
-        match (self.value):
+        match self.value:
             case '^':
                 return left_value ** right_value
             case '**':
@@ -196,7 +201,6 @@ class Node:
             case _:
                 return Node(self.value, left, right)
 
-
 def builder(index, tokens, min_precedence=1):
     """Recursively parses the token list to create the \
     Abstract Syntax Tree.
@@ -218,7 +222,13 @@ def builder(index, tokens, min_precedence=1):
         if tokens[0] == "MATRIX":
             return Matrix(tokens[1], True)
         if tokens[0] == "FACT":
-            return Complex(ft_fact(float(tokens[1][:len(tokens[1])-1])))
+            cmp = Complex(0)
+            cmp.read(tokens)
+            return Complex(ft_fact(cmp))
+        if tokens[0] == "COMPLEX":
+            cmp = Complex(0)
+            cmp.read(tokens)
+            return cmp
         if tokens[0] == 'VAR':
             if tokens[1] in IS_VARIABLE:
                 return IS_VARIABLE[tokens[1]]
@@ -240,7 +250,8 @@ def builder(index, tokens, min_precedence=1):
                 final_value = IS_MATHS[func_name](f_value)
                 return final_value
             else:
-                result = retrieve(func_name, True).solve(f_value)
+                result = retrieve(func_name, True)
+                result = result.solve(f_value)
                 return result
         return Node(token), index
 

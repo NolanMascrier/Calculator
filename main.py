@@ -14,7 +14,10 @@ if __name__ == "__main__":
                 parsed = parse(tokens)
                 result = execute(parsed["type"], parsed["tokens"], val)
                 if result is not None:
-                    print(result)
+                    if isinstance(result, tuple):
+                        print(result[0])
+                    else:
+                        print(result)
             except SyntaxError as e:
                 print(f"Error - Invalid syntax : {e}")
             except ValueError as e:
