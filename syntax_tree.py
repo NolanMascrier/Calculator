@@ -201,9 +201,17 @@ class Node:
                 return Node('/', left, right)
             case '+':
                 if left.is_x_mult() and right.is_x_mult():
-                    mult = left.left.value if left.left.is_constant() else left.right.value\
-                        + right.left.value if right.left.is_constant() else right.right.value
+                    mult = (left.left.value if left.left.is_constant() else left.right.value)\
+                        + (right.left.value if right.left.is_constant() else right.right.value)
                     return Node('*', Node(mult), Node('x'))
+                if left.is_x_mult() and right.is_var():
+                    mult = (left.left.value if left.left.is_constant() else left.right.value) + 1
+                    return Node('*', Node(mult), Node('x'))
+                if right.is_x_mult() and left.is_var():
+                    mult = (right.left.value if right.left.is_constant() else right.right.value) + 1
+                    return Node('*', Node(mult), Node('x'))
+                if right.is_var() and left.is_var():
+                    return Node('*', Node(2), Node('x'))
                 if left.is_constant() and right.is_constant():
                     return Node(left.value + right.value)
                 if left.is_zero():
