@@ -137,6 +137,31 @@ class Complex():
         else:
             raise ValueError("Unsupported token type for Complex")
 
+    def from_string(self, val:str):
+        """Reads a complex value from a string."""
+        im = 0
+        re = 0
+        f_val = val.replace('-', '+-')
+        values = f_val.split('+')
+        for val in values:
+            if val[0] == '-':
+                temp = -1
+                idx = 1
+            else:
+                temp = 1
+                idx = 0
+            if val[len(val) -1 :len(val)] == 'i':
+                extract = val[idx:len(val) - 1]
+                if extract == '':
+                    extract = 1
+                im += temp * float(extract)
+            else:
+                extract = float(val[idx:])
+                re += temp * extract
+        self._imag = im
+        self._real = re
+        return self
+
     def parse(self, value:str):
         """Reads a complex from a string.
         

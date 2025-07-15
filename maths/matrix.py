@@ -48,7 +48,7 @@ class Matrix():
             return
         rows = value[2:-2].split("];[")
         self._values = [
-            [Complex(float(num.strip()), 0) for num in row.split(',')]
+            [Complex(0, 0).from_string(num) for num in row.split(',')]
             for row in rows
         ]
 
