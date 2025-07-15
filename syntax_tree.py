@@ -102,6 +102,14 @@ class Node:
         """Checks if the two nodes are two xs."""
         return self.is_var() and other.is_var() and self.value == other.value
 
+    def is_x_mult(self):
+        """Checks whether or not the node is a multiple of x."""
+        if self.value == '*':
+            if (self.left.is_var() and self.right.is_constant()) or\
+                (self.right.is_var() and self.left.is_constant()):
+                return True
+        return False
+
     def solve(self, x = None):
         """Solves the node, calling itself recursirvely if
         one of the leafs is another node.
@@ -159,19 +167,17 @@ class Node:
         left = self.left.reduce()
         right = self.right.reduce()
         match self.value:
-            case '+':
+            case '^':
                 if left.is_constant() and right.is_constant():
-                    return Node(left.value + right.value)
-                if left.is_zero():
-                    return right
+                    return Node(left.value ** right.value)
                 if right.is_zero():
+                    return Node(Complex(1))
+                if right.is_one():
                     return left
-                if left.value == '+' and left.right.is_constant() and right.is_constant():
-                    return Node('+', Node(left.left, None, None),\
-                        Node(left.right.value + right.value))
-                return Node('+', left, right)
+                if left.value == '^':
+                    return Node('^', left.left, Node('*', left.right, right).reduce())
+                return Node('^', left, right)
             case '*':
-                # constant * constant
                 if left.is_constant() and right.is_constant():
                     return Node(left.value * right.value)
                 if left.is_zero() or right.is_zero():
@@ -187,28 +193,33 @@ class Node:
                 if right.value == '^' and right.left.same_var(left) and right.right.is_constant():
                     return Node('^', left, Node(right.right.value + 1))
                 return Node('*', left, right)
-            case '^':
-                if left.is_constant() and right.is_constant():
-                    return Node(left.value ** right.value)
-                if right.is_zero():
-                    return Node(Complex(1))
-                if right.is_one():
-                    return left
-                if left.value == '^':
-                    return Node('^', left.left, Node('*', left.right, right).reduce())
-                return Node('^', left, right)
-            case '-':
-                if left.is_constant() and right.is_constant():
-                    return Node(left.value - right.value)
-                if right.is_zero():
-                    return left
-                return Node('-', left, right)
             case '/':
                 if left.is_constant() and right.is_constant():
                     return Node(left.value / right.value)
                 if right.is_one():
                     return left
                 return Node('/', left, right)
+            case '+':
+                if left.is_x_mult() and right.is_x_mult():
+                    mult = left.left.value if left.left.is_constant() else left.right.value\
+                        + right.left.value if right.left.is_constant() else right.right.value
+                    return Node('*', Node(mult), Node('x'))
+                if left.is_constant() and right.is_constant():
+                    return Node(left.value + right.value)
+                if left.is_zero():
+                    return right
+                if right.is_zero():
+                    return left
+                if left.value == '+' and left.right.is_constant() and right.is_constant():
+                    return Node('+', Node(left.left, None, None),\
+                        Node(left.right.value + right.value))
+                return Node('+', left, right)
+            case '-':
+                if left.is_constant() and right.is_constant():
+                    return Node(left.value - right.value)
+                if right.is_zero():
+                    return left
+                return Node('-', left, right)
             case _:
                 return Node(self.value, left, right)
 
